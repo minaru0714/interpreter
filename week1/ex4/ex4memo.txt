@@ -1,0 +1,33 @@
+
+(match eval env e1 with) と (match eval e1 with) の違いは、式 e1 の評価時に使用される環境の違い
+(match eval env e1 with) は、e1 を環境 env で評価することを意味する。
+つまり、変数や関数などの束縛を含む環境を参照しながら、e1 を評価。
+一方、(match eval e1 with) は、e1 を現在の環境で評価。
+つまり、e1 の評価時には現在のスコープ内の変数や関数のみが参照、外部の環境や束縛は考慮されなし。
+
+
+（例）
+let x = 10 in
+let env = [("x", 5)] in
+let e1 = EVar "x" in
+let result1 = (match eval env e1 with
+               | VInt x -> x
+               | _ -> 0) in
+let result2 = (match eval e1 with
+               | VInt x -> x
+               | _ -> 0) in
+print_int result1;    (* 5 を表示 *)
+print_int result2;    (* エラー: 外部の環境を参照できないため *)
+
+
+
+式 ELet (x, e1, e2) 
+
+
+
+e1 を env で評価して値を得ます。これを (x, eval env e1) という形式で表現。
+ここで、eval env e1 は e1 を環境 env で評価することを意味する。
+(x, eval env e1) を現在の環境 env の先頭に追加して新しい環境を作成します。
+e2 を新しい環境で評価します。つまり、eval ((x, eval env e1) :: env) e2 として再帰的に評価します。
+このルールにより、変数 x に式 e1 の評価結果を束縛した環境を作成し、その環境で式 e2 を評価することができます。
+これによって変数のスコープと値の束縛が実現されます。

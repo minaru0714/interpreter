@@ -1,0 +1,398 @@
+   0  $accept : %entry% $end
+
+   1  main : expr EOF
+   2       | expr END
+
+   3  expr : IF expr THEN expr ELSE expr
+   4       | compare_expr
+
+   5  compare_expr : arith_expr EQ arith_expr
+   6               | arith_expr LT arith_expr
+   7               | arith_expr
+
+   8  arith_expr : arith_expr PLUS term_expr
+   9             | arith_expr MINUS term_expr
+  10             | term_expr
+
+  11  term_expr : term_expr TIMES atomic_expr
+  12            | term_expr DIV atomic_expr
+  13            | atomic_expr
+
+  14  atomic_expr : INT
+  15              | BOOL
+  16              | LPAR expr RPAR
+
+  17  var : ID
+
+  18  %entry% : '\001' main
+
+state 0
+	$accept : . %entry% $end  (0)
+
+	'\001'  shift 1
+	.  error
+
+	%entry%  goto 2
+
+
+state 1
+	%entry% : '\001' . main  (18)
+
+	INT  shift 3
+	BOOL  shift 4
+	IF  shift 5
+	LPAR  shift 6
+	.  error
+
+	main  goto 7
+	expr  goto 8
+	compare_expr  goto 9
+	arith_expr  goto 10
+	term_expr  goto 11
+	atomic_expr  goto 12
+
+
+state 2
+	$accept : %entry% . $end  (0)
+
+	$end  accept
+
+
+state 3
+	atomic_expr : INT .  (14)
+
+	.  reduce 14
+
+
+state 4
+	atomic_expr : BOOL .  (15)
+
+	.  reduce 15
+
+
+state 5
+	expr : IF . expr THEN expr ELSE expr  (3)
+
+	INT  shift 3
+	BOOL  shift 4
+	IF  shift 5
+	LPAR  shift 6
+	.  error
+
+	expr  goto 13
+	compare_expr  goto 9
+	arith_expr  goto 10
+	term_expr  goto 11
+	atomic_expr  goto 12
+
+
+state 6
+	atomic_expr : LPAR . expr RPAR  (16)
+
+	INT  shift 3
+	BOOL  shift 4
+	IF  shift 5
+	LPAR  shift 6
+	.  error
+
+	expr  goto 14
+	compare_expr  goto 9
+	arith_expr  goto 10
+	term_expr  goto 11
+	atomic_expr  goto 12
+
+
+state 7
+	%entry% : '\001' main .  (18)
+
+	.  reduce 18
+
+
+state 8
+	main : expr . EOF  (1)
+	main : expr . END  (2)
+
+	END  shift 15
+	EOF  shift 16
+	.  error
+
+
+state 9
+	expr : compare_expr .  (4)
+
+	.  reduce 4
+
+
+state 10
+	compare_expr : arith_expr . EQ arith_expr  (5)
+	compare_expr : arith_expr . LT arith_expr  (6)
+	compare_expr : arith_expr .  (7)
+	arith_expr : arith_expr . PLUS term_expr  (8)
+	arith_expr : arith_expr . MINUS term_expr  (9)
+
+	PLUS  shift 17
+	MINUS  shift 18
+	EQ  shift 19
+	LT  shift 20
+	THEN  reduce 7
+	ELSE  reduce 7
+	RPAR  reduce 7
+	END  reduce 7
+	EOF  reduce 7
+
+
+state 11
+	arith_expr : term_expr .  (10)
+	term_expr : term_expr . TIMES atomic_expr  (11)
+	term_expr : term_expr . DIV atomic_expr  (12)
+
+	TIMES  shift 21
+	DIV  shift 22
+	PLUS  reduce 10
+	MINUS  reduce 10
+	EQ  reduce 10
+	LT  reduce 10
+	THEN  reduce 10
+	ELSE  reduce 10
+	RPAR  reduce 10
+	END  reduce 10
+	EOF  reduce 10
+
+
+state 12
+	term_expr : atomic_expr .  (13)
+
+	.  reduce 13
+
+
+state 13
+	expr : IF expr . THEN expr ELSE expr  (3)
+
+	THEN  shift 23
+	.  error
+
+
+state 14
+	atomic_expr : LPAR expr . RPAR  (16)
+
+	RPAR  shift 24
+	.  error
+
+
+state 15
+	main : expr END .  (2)
+
+	.  reduce 2
+
+
+state 16
+	main : expr EOF .  (1)
+
+	.  reduce 1
+
+
+state 17
+	arith_expr : arith_expr PLUS . term_expr  (8)
+
+	INT  shift 3
+	BOOL  shift 4
+	LPAR  shift 6
+	.  error
+
+	term_expr  goto 25
+	atomic_expr  goto 12
+
+
+state 18
+	arith_expr : arith_expr MINUS . term_expr  (9)
+
+	INT  shift 3
+	BOOL  shift 4
+	LPAR  shift 6
+	.  error
+
+	term_expr  goto 26
+	atomic_expr  goto 12
+
+
+state 19
+	compare_expr : arith_expr EQ . arith_expr  (5)
+
+	INT  shift 3
+	BOOL  shift 4
+	LPAR  shift 6
+	.  error
+
+	arith_expr  goto 27
+	term_expr  goto 11
+	atomic_expr  goto 12
+
+
+state 20
+	compare_expr : arith_expr LT . arith_expr  (6)
+
+	INT  shift 3
+	BOOL  shift 4
+	LPAR  shift 6
+	.  error
+
+	arith_expr  goto 28
+	term_expr  goto 11
+	atomic_expr  goto 12
+
+
+state 21
+	term_expr : term_expr TIMES . atomic_expr  (11)
+
+	INT  shift 3
+	BOOL  shift 4
+	LPAR  shift 6
+	.  error
+
+	atomic_expr  goto 29
+
+
+state 22
+	term_expr : term_expr DIV . atomic_expr  (12)
+
+	INT  shift 3
+	BOOL  shift 4
+	LPAR  shift 6
+	.  error
+
+	atomic_expr  goto 30
+
+
+state 23
+	expr : IF expr THEN . expr ELSE expr  (3)
+
+	INT  shift 3
+	BOOL  shift 4
+	IF  shift 5
+	LPAR  shift 6
+	.  error
+
+	expr  goto 31
+	compare_expr  goto 9
+	arith_expr  goto 10
+	term_expr  goto 11
+	atomic_expr  goto 12
+
+
+state 24
+	atomic_expr : LPAR expr RPAR .  (16)
+
+	.  reduce 16
+
+
+state 25
+	arith_expr : arith_expr PLUS term_expr .  (8)
+	term_expr : term_expr . TIMES atomic_expr  (11)
+	term_expr : term_expr . DIV atomic_expr  (12)
+
+	TIMES  shift 21
+	DIV  shift 22
+	PLUS  reduce 8
+	MINUS  reduce 8
+	EQ  reduce 8
+	LT  reduce 8
+	THEN  reduce 8
+	ELSE  reduce 8
+	RPAR  reduce 8
+	END  reduce 8
+	EOF  reduce 8
+
+
+state 26
+	arith_expr : arith_expr MINUS term_expr .  (9)
+	term_expr : term_expr . TIMES atomic_expr  (11)
+	term_expr : term_expr . DIV atomic_expr  (12)
+
+	TIMES  shift 21
+	DIV  shift 22
+	PLUS  reduce 9
+	MINUS  reduce 9
+	EQ  reduce 9
+	LT  reduce 9
+	THEN  reduce 9
+	ELSE  reduce 9
+	RPAR  reduce 9
+	END  reduce 9
+	EOF  reduce 9
+
+
+state 27
+	compare_expr : arith_expr EQ arith_expr .  (5)
+	arith_expr : arith_expr . PLUS term_expr  (8)
+	arith_expr : arith_expr . MINUS term_expr  (9)
+
+	PLUS  shift 17
+	MINUS  shift 18
+	THEN  reduce 5
+	ELSE  reduce 5
+	RPAR  reduce 5
+	END  reduce 5
+	EOF  reduce 5
+
+
+state 28
+	compare_expr : arith_expr LT arith_expr .  (6)
+	arith_expr : arith_expr . PLUS term_expr  (8)
+	arith_expr : arith_expr . MINUS term_expr  (9)
+
+	PLUS  shift 17
+	MINUS  shift 18
+	THEN  reduce 6
+	ELSE  reduce 6
+	RPAR  reduce 6
+	END  reduce 6
+	EOF  reduce 6
+
+
+state 29
+	term_expr : term_expr TIMES atomic_expr .  (11)
+
+	.  reduce 11
+
+
+state 30
+	term_expr : term_expr DIV atomic_expr .  (12)
+
+	.  reduce 12
+
+
+state 31
+	expr : IF expr THEN expr . ELSE expr  (3)
+
+	ELSE  shift 32
+	.  error
+
+
+state 32
+	expr : IF expr THEN expr ELSE . expr  (3)
+
+	INT  shift 3
+	BOOL  shift 4
+	IF  shift 5
+	LPAR  shift 6
+	.  error
+
+	expr  goto 33
+	compare_expr  goto 9
+	arith_expr  goto 10
+	term_expr  goto 11
+	atomic_expr  goto 12
+
+
+state 33
+	expr : IF expr THEN expr ELSE expr .  (3)
+
+	.  reduce 3
+
+
+Rules never reduced:
+	var : ID  (17)
+
+
+20 terminals, 9 nonterminals
+19 grammar rules, 34 states

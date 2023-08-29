@@ -1,0 +1,217 @@
+   0  $accept : %entry% $end
+
+   1  main : expr EOF
+
+   2  expr : LET var EQ expr IN expr
+   3       | arith_expr
+
+   4  arith_expr : arith_expr PLUS factor_expr
+   5             | factor_expr
+
+   6  factor_expr : atomic_expr
+
+   7  atomic_expr : INT
+   8              | ID
+   9              | LPAR expr RPAR
+
+  10  var : ID
+
+  11  %entry% : '\001' main
+
+state 0
+	$accept : . %entry% $end  (0)
+
+	'\001'  shift 1
+	.  error
+
+	%entry%  goto 2
+
+
+state 1
+	%entry% : '\001' . main  (11)
+
+	INT  shift 3
+	ID  shift 4
+	LET  shift 5
+	LPAR  shift 6
+	.  error
+
+	main  goto 7
+	expr  goto 8
+	arith_expr  goto 9
+	factor_expr  goto 10
+	atomic_expr  goto 11
+
+
+state 2
+	$accept : %entry% . $end  (0)
+
+	$end  accept
+
+
+state 3
+	atomic_expr : INT .  (7)
+
+	.  reduce 7
+
+
+state 4
+	atomic_expr : ID .  (8)
+
+	.  reduce 8
+
+
+state 5
+	expr : LET . var EQ expr IN expr  (2)
+
+	ID  shift 12
+	.  error
+
+	var  goto 13
+
+
+state 6
+	atomic_expr : LPAR . expr RPAR  (9)
+
+	INT  shift 3
+	ID  shift 4
+	LET  shift 5
+	LPAR  shift 6
+	.  error
+
+	expr  goto 14
+	arith_expr  goto 9
+	factor_expr  goto 10
+	atomic_expr  goto 11
+
+
+state 7
+	%entry% : '\001' main .  (11)
+
+	.  reduce 11
+
+
+state 8
+	main : expr . EOF  (1)
+
+	EOF  shift 15
+	.  error
+
+
+state 9
+	expr : arith_expr .  (3)
+	arith_expr : arith_expr . PLUS factor_expr  (4)
+
+	PLUS  shift 16
+	IN  reduce 3
+	RPAR  reduce 3
+	EOF  reduce 3
+
+
+state 10
+	arith_expr : factor_expr .  (5)
+
+	.  reduce 5
+
+
+state 11
+	factor_expr : atomic_expr .  (6)
+
+	.  reduce 6
+
+
+state 12
+	var : ID .  (10)
+
+	.  reduce 10
+
+
+state 13
+	expr : LET var . EQ expr IN expr  (2)
+
+	EQ  shift 17
+	.  error
+
+
+state 14
+	atomic_expr : LPAR expr . RPAR  (9)
+
+	RPAR  shift 18
+	.  error
+
+
+state 15
+	main : expr EOF .  (1)
+
+	.  reduce 1
+
+
+state 16
+	arith_expr : arith_expr PLUS . factor_expr  (4)
+
+	INT  shift 3
+	ID  shift 4
+	LPAR  shift 6
+	.  error
+
+	factor_expr  goto 19
+	atomic_expr  goto 11
+
+
+state 17
+	expr : LET var EQ . expr IN expr  (2)
+
+	INT  shift 3
+	ID  shift 4
+	LET  shift 5
+	LPAR  shift 6
+	.  error
+
+	expr  goto 20
+	arith_expr  goto 9
+	factor_expr  goto 10
+	atomic_expr  goto 11
+
+
+state 18
+	atomic_expr : LPAR expr RPAR .  (9)
+
+	.  reduce 9
+
+
+state 19
+	arith_expr : arith_expr PLUS factor_expr .  (4)
+
+	.  reduce 4
+
+
+state 20
+	expr : LET var EQ expr . IN expr  (2)
+
+	IN  shift 21
+	.  error
+
+
+state 21
+	expr : LET var EQ expr IN . expr  (2)
+
+	INT  shift 3
+	ID  shift 4
+	LET  shift 5
+	LPAR  shift 6
+	.  error
+
+	expr  goto 22
+	arith_expr  goto 9
+	factor_expr  goto 10
+	atomic_expr  goto 11
+
+
+state 22
+	expr : LET var EQ expr IN expr .  (2)
+
+	.  reduce 2
+
+
+12 terminals, 8 nonterminals
+12 grammar rules, 23 states
