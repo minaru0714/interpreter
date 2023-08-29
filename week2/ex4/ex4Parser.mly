@@ -67,8 +67,21 @@ expr:
   | expr apply_expr    {EApp ($1,$2)}
   | MATCH expr WITH pattern_expr END { EMatch ($2, $4) }
   | expr CONS expr { ECons ($1, $3) }
+  | cons_expr  { $1 }
   | apply_expr { $1 }
+  
 ;
+
+cons_expr:
+  | noncons_expr                     { $1 }
+  | expr CONS cons_expr              { ECons ($1, $3) }
+  ;
+
+noncons_expr:
+  | apply_expr                       { $1 }
+  | LPAR expr COMMA expr_list RPAR   { ETuple ($2 :: $4) }
+  ;
+
 
 expr_list:
   | expr { [$1] }
@@ -85,9 +98,9 @@ pattern:
   | INT     { PInt $1 }
   | BOOL    { PBool $1 }
   | ID      { PVar $1 }
-  | LBRACKET RBRACKET { PNil }
   | LPAR pattern COMMA pattern_list RPAR { PTuple ($2 :: $4) }
   | pattern CONS pattern { PCons ($1, $3) }
+  | LBRACKET RBRACKET { PNil }
 ;
 
 pattern_list:

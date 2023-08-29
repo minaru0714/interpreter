@@ -85,7 +85,7 @@ let rec eval:env -> expr -> value = fun env expr -> match expr with
            )
          | _ -> raise Eval_error
         )
-      | _ -> raise Eval_error  (* 未網羅のケース *)
+      | _ -> raise Eval_error  
     )
     
   | EEqual (e1, e2) ->
@@ -95,9 +95,9 @@ let rec eval:env -> expr -> value = fun env expr -> match expr with
         (match eval env e2 with
          | VBool _ -> raise Eval_error
          | VInt y -> if x = y then VBool true else VBool false
-         | _ -> raise Eval_error  (* 未網羅のケース *)
+         | _ -> raise Eval_error  
         )
-      | _ -> raise Eval_error  (* 未網羅のケース *)
+      | _ -> raise Eval_error
     )
     
   | ECompare (e1, e2) ->
@@ -107,9 +107,9 @@ let rec eval:env -> expr -> value = fun env expr -> match expr with
         (match eval env e2 with
          | VBool _ -> raise Eval_error
          | VInt y -> if x < y then VBool true else VBool false
-         | _ -> raise Eval_error  (* 未網羅のケース *)
+         | _ -> raise Eval_error  
         )
-      | _ -> raise Eval_error  (* 未網羅のケース *)
+      | _ -> raise Eval_error  
     )
     
   | EIf (e, e1, e2) ->
@@ -171,13 +171,7 @@ let rec eval:env -> expr -> value = fun env expr -> match expr with
         | VRecFun _ -> print_string "<rec_function>"
         | VNil -> print_string "[]"
         | VCons (v1, v2) ->
-            print_string "[";
-            print_value v1;
-            let rec print_list = function
-              | VNil -> print_string "]"
-              | VCons (v1, v2) -> print_string ", "; print_value v1; print_list v2
-              | _ -> failwith "Not a list" in
-            print_list v2
+          print_cons v1 v2
         | VTuple vs ->
             print_string "(";
             (match vs with
@@ -186,4 +180,19 @@ let rec eval:env -> expr -> value = fun env expr -> match expr with
                 print_value v;
                 List.iter (fun v -> print_string ", "; print_value v) vs);
             print_string ")"
+
+  and print_cons v1 v2 =
+            match v2 with
+            | VNil ->
+                print_value v1;
+                print_string " :: []"
+            | VCons (_, _) ->
+                print_value v1;
+                print_string " :: (";
+                print_value v2;
+                print_string ")"
+            | _ ->
+                print_value v1;
+                print_string " :: ";
+                print_value v2
    
