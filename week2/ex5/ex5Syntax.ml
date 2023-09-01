@@ -167,13 +167,13 @@ let rec eval:env -> expr -> value = fun env expr -> match expr with
   | ETuple es ->
     let vs = List.map (eval env) es in VTuple vs
   
- 
   | ERecFunand (funs, e) ->
-     let new_env = 
-          List.map (fun (f, x, e') -> 
-            (f, VRecFunand (List.length funs, funs, env))) funs
-        in
-        eval (new_env @ env) e
+      let new_env = 
+           List.map (fun (f, x, e') -> 
+             (f, VRecFunand (List.length funs, funs, env))) funs
+         in
+         eval (new_env @ env) e
+
 
 
   let rec print_value : value -> unit  = fun  v ->

@@ -6,11 +6,11 @@
    3  command : expr SEMI
    4          | LET var EQ expr SEMI
    5          | LET REC var var var_expr SEMI
-   6          | LET REC var var EQ expr AND and_expr SEMI
+   6          | LET REC var var EQ expr and_expr SEMI
 
    7  expr : LET var EQ expr IN expr
    8       | LET REC var var var_expr IN expr
-   9       | LET REC var var EQ expr and_expr expr
+   9       | LET REC var var EQ expr and_expr IN expr
   10       | IF expr THEN expr ELSE expr
   11       | expr EQ expr
   12       | expr LT expr
@@ -28,7 +28,7 @@
   23           | var var_expr
 
   24  and_expr : AND var var EQ expr and_expr
-  25           | IN
+  25           |
 
   26  expr_list : expr
   27            | expr COMMA expr_list
@@ -132,7 +132,7 @@ state 6
 state 7
 	expr : LET . var EQ expr IN expr  (7)
 	expr : LET . REC var var var_expr IN expr  (8)
-	expr : LET . REC var var EQ expr and_expr expr  (9)
+	expr : LET . REC var var EQ expr and_expr IN expr  (9)
 
 	ID  shift 19
 	REC  shift 20
@@ -257,10 +257,10 @@ state 15
 state 16
 	command : LET . var EQ expr SEMI  (4)
 	command : LET . REC var var var_expr SEMI  (5)
-	command : LET . REC var var EQ expr AND and_expr SEMI  (6)
+	command : LET . REC var var EQ expr and_expr SEMI  (6)
 	expr : LET . var EQ expr IN expr  (7)
 	expr : LET . REC var var var_expr IN expr  (8)
-	expr : LET . REC var var EQ expr and_expr expr  (9)
+	expr : LET . REC var var EQ expr and_expr IN expr  (9)
 
 	ID  shift 19
 	REC  shift 37
@@ -312,7 +312,7 @@ state 19
 
 state 20
 	expr : LET REC . var var var_expr IN expr  (8)
-	expr : LET REC . var var EQ expr and_expr expr  (9)
+	expr : LET REC . var var EQ expr and_expr IN expr  (9)
 
 	ID  shift 19
 	.  error
@@ -573,9 +573,9 @@ state 36
 
 state 37
 	command : LET REC . var var var_expr SEMI  (5)
-	command : LET REC . var var EQ expr AND and_expr SEMI  (6)
+	command : LET REC . var var EQ expr and_expr SEMI  (6)
 	expr : LET REC . var var var_expr IN expr  (8)
-	expr : LET REC . var var EQ expr and_expr expr  (9)
+	expr : LET REC . var var EQ expr and_expr IN expr  (9)
 
 	ID  shift 19
 	.  error
@@ -599,7 +599,7 @@ state 39
 
 state 40
 	expr : LET REC var . var var_expr IN expr  (8)
-	expr : LET REC var . var EQ expr and_expr expr  (9)
+	expr : LET REC var . var EQ expr and_expr IN expr  (9)
 
 	ID  shift 19
 	.  error
@@ -942,9 +942,9 @@ state 52
 
 state 53
 	command : LET REC var . var var_expr SEMI  (5)
-	command : LET REC var . var EQ expr AND and_expr SEMI  (6)
+	command : LET REC var . var EQ expr and_expr SEMI  (6)
 	expr : LET REC var . var var_expr IN expr  (8)
-	expr : LET REC var . var EQ expr and_expr expr  (9)
+	expr : LET REC var . var EQ expr and_expr IN expr  (9)
 
 	ID  shift 19
 	.  error
@@ -973,7 +973,7 @@ state 54
 
 state 55
 	expr : LET REC var var . var_expr IN expr  (8)
-	expr : LET REC var var . EQ expr and_expr expr  (9)
+	expr : LET REC var var . EQ expr and_expr IN expr  (9)
 
 	ID  shift 19
 	EQ  shift 68
@@ -1135,9 +1135,9 @@ state 65
 
 state 66
 	command : LET REC var var . var_expr SEMI  (5)
-	command : LET REC var var . EQ expr AND and_expr SEMI  (6)
+	command : LET REC var var . EQ expr and_expr SEMI  (6)
 	expr : LET REC var var . var_expr IN expr  (8)
-	expr : LET REC var var . EQ expr and_expr expr  (9)
+	expr : LET REC var var . EQ expr and_expr IN expr  (9)
 
 	ID  shift 19
 	EQ  shift 78
@@ -1179,7 +1179,7 @@ state 67
 
 
 state 68
-	expr : LET REC var var EQ . expr and_expr expr  (9)
+	expr : LET REC var var EQ . expr and_expr IN expr  (9)
 	var_expr : EQ . expr  (22)
 
 	INT  shift 4
@@ -1305,8 +1305,8 @@ state 77
 
 
 state 78
-	command : LET REC var var EQ . expr AND and_expr SEMI  (6)
-	expr : LET REC var var EQ . expr and_expr expr  (9)
+	command : LET REC var var EQ . expr and_expr SEMI  (6)
+	expr : LET REC var var EQ . expr and_expr IN expr  (9)
 	var_expr : EQ . expr  (22)
 
 	INT  shift 4
@@ -1339,8 +1339,9 @@ state 80
 	.  reduce 4
 
 
+81: reduce/reduce conflict (reduce 22, reduce 25) on IN
 state 81
-	expr : LET REC var var EQ expr . and_expr expr  (9)
+	expr : LET REC var var EQ expr . and_expr IN expr  (9)
 	expr : expr . EQ expr  (11)
 	expr : expr . LT expr  (12)
 	expr : expr . PLUS expr  (13)
@@ -1350,6 +1351,7 @@ state 81
 	expr : expr . apply_expr  (18)
 	expr : expr . CONS expr  (20)
 	var_expr : EQ expr .  (22)
+	and_expr : .  (25)
 
 	INT  shift 4
 	BOOL  shift 5
@@ -1363,10 +1365,10 @@ state 81
 	LPAR  shift 9
 	CONS  shift 35
 	LBRACKET  shift 12
-	AND  shift 93
+	AND  shift 92
 	IN  reduce 22
 
-	and_expr  goto 94
+	and_expr  goto 93
 	apply_expr  goto 36
 
 
@@ -1384,7 +1386,7 @@ state 82
 	LBRACKET  shift 12
 	.  error
 
-	expr  goto 95
+	expr  goto 94
 	apply_expr  goto 15
 
 
@@ -1408,7 +1410,7 @@ state 84
 	LBRACKET  shift 12
 	.  error
 
-	expr  goto 96
+	expr  goto 95
 	apply_expr  goto 15
 
 
@@ -1496,8 +1498,8 @@ state 87
 	LBRACKET  shift 63
 	.  error
 
-	pattern  goto 97
-	pattern_list  goto 98
+	pattern  goto 96
+	pattern_list  goto 97
 
 
 state 88
@@ -1522,7 +1524,7 @@ state 88
 	EQ  shift 31
 	LT  shift 32
 	LPAR  shift 9
-	OR  shift 99
+	OR  shift 98
 	CONS  shift 35
 	LBRACKET  shift 12
 	END  reduce 28
@@ -1540,9 +1542,11 @@ state 89
 	COMMA  reduce 35
 
 
+90: reduce/reduce conflict (reduce 22, reduce 25) on IN
+90: reduce/reduce conflict (reduce 22, reduce 25) on SEMI
 state 90
-	command : LET REC var var EQ expr . AND and_expr SEMI  (6)
-	expr : LET REC var var EQ expr . and_expr expr  (9)
+	command : LET REC var var EQ expr . and_expr SEMI  (6)
+	expr : LET REC var var EQ expr . and_expr IN expr  (9)
 	expr : expr . EQ expr  (11)
 	expr : expr . LT expr  (12)
 	expr : expr . PLUS expr  (13)
@@ -1552,6 +1556,7 @@ state 90
 	expr : expr . apply_expr  (18)
 	expr : expr . CONS expr  (20)
 	var_expr : EQ expr .  (22)
+	and_expr : .  (25)
 
 	INT  shift 4
 	BOOL  shift 5
@@ -1565,11 +1570,11 @@ state 90
 	LPAR  shift 9
 	CONS  shift 35
 	LBRACKET  shift 12
-	AND  shift 100
+	AND  shift 92
 	IN  reduce 22
 	SEMI  reduce 22
 
-	and_expr  goto 94
+	and_expr  goto 99
 	apply_expr  goto 36
 
 
@@ -1580,39 +1585,22 @@ state 91
 
 
 state 92
-	and_expr : IN .  (25)
-
-	.  reduce 25
-
-
-state 93
 	and_expr : AND . var var EQ expr and_expr  (24)
 
 	ID  shift 19
 	.  error
 
-	var  goto 101
+	var  goto 100
+
+
+state 93
+	expr : LET REC var var EQ expr and_expr . IN expr  (9)
+
+	IN  shift 101
+	.  error
 
 
 state 94
-	expr : LET REC var var EQ expr and_expr . expr  (9)
-
-	INT  shift 4
-	BOOL  shift 5
-	ID  shift 6
-	LET  shift 7
-	IF  shift 8
-	LPAR  shift 9
-	FUN  shift 10
-	MATCH  shift 11
-	LBRACKET  shift 12
-	.  error
-
-	expr  goto 102
-	apply_expr  goto 15
-
-
-state 95
 	expr : expr . EQ expr  (11)
 	expr : expr . LT expr  (12)
 	expr : expr . PLUS expr  (13)
@@ -1641,7 +1629,7 @@ state 95
 	apply_expr  goto 36
 
 
-state 96
+state 95
 	expr : LET REC var var var_expr IN expr .  (8)
 	expr : expr . EQ expr  (11)
 	expr : expr . LT expr  (12)
@@ -1678,24 +1666,24 @@ state 96
 	apply_expr  goto 36
 
 
-state 97
+state 96
 	pattern : pattern . CONS pattern  (35)
 	pattern_list : pattern .  (36)
 	pattern_list : pattern . COMMA pattern_list  (37)
 
-	COMMA  shift 103
+	COMMA  shift 102
 	CONS  shift 77
 	RPAR  reduce 36
 
 
-state 98
+state 97
 	pattern : LPAR pattern COMMA pattern_list . RPAR  (34)
 
-	RPAR  shift 104
+	RPAR  shift 103
 	.  error
 
 
-state 99
+state 98
 	pattern_expr : pattern ARROW expr OR . pattern_expr  (29)
 
 	INT  shift 59
@@ -1705,34 +1693,87 @@ state 99
 	LBRACKET  shift 63
 	.  error
 
-	pattern_expr  goto 105
+	pattern_expr  goto 104
 	pattern  goto 65
 
 
-state 100
-	command : LET REC var var EQ expr AND . and_expr SEMI  (6)
-	and_expr : AND . var var EQ expr and_expr  (24)
+state 99
+	command : LET REC var var EQ expr and_expr . SEMI  (6)
+	expr : LET REC var var EQ expr and_expr . IN expr  (9)
 
-	ID  shift 19
-	IN  shift 92
-	AND  shift 93
+	IN  shift 101
+	SEMI  shift 105
 	.  error
 
-	var  goto 101
-	and_expr  goto 106
 
-
-state 101
+state 100
 	and_expr : AND var . var EQ expr and_expr  (24)
 
 	ID  shift 19
 	.  error
 
-	var  goto 107
+	var  goto 106
+
+
+state 101
+	expr : LET REC var var EQ expr and_expr IN . expr  (9)
+
+	INT  shift 4
+	BOOL  shift 5
+	ID  shift 6
+	LET  shift 7
+	IF  shift 8
+	LPAR  shift 9
+	FUN  shift 10
+	MATCH  shift 11
+	LBRACKET  shift 12
+	.  error
+
+	expr  goto 107
+	apply_expr  goto 15
 
 
 state 102
-	expr : LET REC var var EQ expr and_expr expr .  (9)
+	pattern_list : pattern COMMA . pattern_list  (37)
+
+	INT  shift 59
+	BOOL  shift 60
+	ID  shift 61
+	LPAR  shift 62
+	LBRACKET  shift 63
+	.  error
+
+	pattern  goto 96
+	pattern_list  goto 108
+
+
+state 103
+	pattern : LPAR pattern COMMA pattern_list RPAR .  (34)
+
+	.  reduce 34
+
+
+state 104
+	pattern_expr : pattern ARROW expr OR pattern_expr .  (29)
+
+	.  reduce 29
+
+
+state 105
+	command : LET REC var var EQ expr and_expr SEMI .  (6)
+
+	.  reduce 6
+
+
+state 106
+	and_expr : AND var var . EQ expr and_expr  (24)
+
+	EQ  shift 109
+	.  error
+
+
+state 107
+	expr : LET REC var var EQ expr and_expr IN expr .  (9)
 	expr : expr . EQ expr  (11)
 	expr : expr . LT expr  (12)
 	expr : expr . PLUS expr  (13)
@@ -1749,12 +1790,12 @@ state 102
 	MINUS  shift 28
 	TIMES  shift 29
 	DIV  shift 30
+	EQ  shift 31
+	LT  shift 32
 	LPAR  shift 9
 	CONS  shift 35
 	LBRACKET  shift 12
 	IN  reduce 9
-	EQ  reduce 9
-	LT  reduce 9
 	THEN  reduce 9
 	ELSE  reduce 9
 	RPAR  reduce 9
@@ -1768,46 +1809,6 @@ state 102
 	apply_expr  goto 36
 
 
-state 103
-	pattern_list : pattern COMMA . pattern_list  (37)
-
-	INT  shift 59
-	BOOL  shift 60
-	ID  shift 61
-	LPAR  shift 62
-	LBRACKET  shift 63
-	.  error
-
-	pattern  goto 97
-	pattern_list  goto 108
-
-
-state 104
-	pattern : LPAR pattern COMMA pattern_list RPAR .  (34)
-
-	.  reduce 34
-
-
-state 105
-	pattern_expr : pattern ARROW expr OR pattern_expr .  (29)
-
-	.  reduce 29
-
-
-state 106
-	command : LET REC var var EQ expr AND and_expr . SEMI  (6)
-
-	SEMI  shift 109
-	.  error
-
-
-state 107
-	and_expr : AND var var . EQ expr and_expr  (24)
-
-	EQ  shift 110
-	.  error
-
-
 state 108
 	pattern_list : pattern COMMA pattern_list .  (37)
 
@@ -1815,12 +1816,6 @@ state 108
 
 
 state 109
-	command : LET REC var var EQ expr AND and_expr SEMI .  (6)
-
-	.  reduce 6
-
-
-state 110
 	and_expr : AND var var EQ . expr and_expr  (24)
 
 	INT  shift 4
@@ -1834,11 +1829,11 @@ state 110
 	LBRACKET  shift 12
 	.  error
 
-	expr  goto 111
+	expr  goto 110
 	apply_expr  goto 15
 
 
-state 111
+state 110
 	expr : expr . EQ expr  (11)
 	expr : expr . LT expr  (12)
 	expr : expr . PLUS expr  (13)
@@ -1848,11 +1843,11 @@ state 111
 	expr : expr . apply_expr  (18)
 	expr : expr . CONS expr  (20)
 	and_expr : AND var var EQ expr . and_expr  (24)
+	and_expr : .  (25)
 
 	INT  shift 4
 	BOOL  shift 5
 	ID  shift 6
-	IN  shift 92
 	PLUS  shift 27
 	MINUS  shift 28
 	TIMES  shift 29
@@ -1862,14 +1857,15 @@ state 111
 	LPAR  shift 9
 	CONS  shift 35
 	LBRACKET  shift 12
-	AND  shift 93
-	.  error
+	AND  shift 92
+	IN  reduce 25
+	SEMI  reduce 25
 
-	and_expr  goto 112
+	and_expr  goto 111
 	apply_expr  goto 36
 
 
-state 112
+state 111
 	and_expr : AND var var EQ expr and_expr .  (24)
 
 	.  reduce 24
@@ -1880,5 +1876,9 @@ Rules never reduced:
 	expr_list : expr COMMA expr_list  (27)
 
 
+State 81 contains 1 reduce/reduce conflict.
+State 90 contains 2 reduce/reduce conflicts.
+
+
 34 terminals, 13 nonterminals
-46 grammar rules, 113 states
+46 grammar rules, 112 states
