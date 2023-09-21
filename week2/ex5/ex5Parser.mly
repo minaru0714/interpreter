@@ -43,21 +43,18 @@
 
 main:
  |expr EOF { $1 }
- | expr SEMI { $1 } 
-
+;
 
 command:
   | expr SEMI { CExp $1 }
   | LET var EQ expr SEMI { CLet ($2, $4) }
   | LET REC var var var_expr SEMI { CRecFun ($3, $4, $5) }
-  | LET REC var var EQ expr  and_expr SEMI { CRecFunand  (($3, $4, $6) :: $7) }
 ;
-
 
 expr:
   | LET var EQ expr IN expr      { ELet($2,$4,$6) }
   | LET REC var var var_expr IN expr  { ERecFun ($3, $4, $5, $7) }
-  | LET REC var var EQ expr and_expr IN expr { ERecFunand ((($3,$4,$6) :: $7), $9) }
+  | LET REC var var var_expr  and_expr IN expr { ERecFunand ((($3,$4,$5) :: $6), $8) }
   | IF expr THEN expr ELSE expr  { EIf($2,$4,$6) }
   | expr EQ expr { EEqual($1, $3) }
   | expr LT expr { ECompare($1, $3) }
@@ -71,8 +68,6 @@ expr:
   | expr CONS expr { ECons ($1, $3) }
   | apply_expr { $1 }
 ;
-
-
 
 
 var_expr:

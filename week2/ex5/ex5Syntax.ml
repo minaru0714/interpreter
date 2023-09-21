@@ -35,7 +35,7 @@ and expr = EValue of value
 and command = CExp of expr
           | CLet of name * expr
           | CRecFun of name * name * expr   
-          | CRecFunand of (name * name * expr) list   
+        
 
 and pattern = PInt of int
              | PBool of bool
@@ -135,13 +135,12 @@ let rec eval:env -> expr -> value = fun env expr -> match expr with
       eval ((x, eval env e2) :: oenv ) e
     | VRecFun(f, x, e, oenv) ->
        let env' = (x, eval env e2) :: (f, VRecFun (f, x, e, oenv)) :: oenv in eval env' e 
-    | VRecFunand (fn, xn, oenv) ->  
-       (match xn |> List.find_opt (fun (f, _, _) -> List.exists (fun (fname, _, _) -> f = fname) xn) with
-       | Some (f, x, e) ->
-         let v = eval env e2 in
-         let new_env = (x, v) :: (xn |> List.map (fun (f, x, e) -> (f, VRecFunand (fn, xn, oenv)))) @ oenv in
-         eval new_env e
-       | None -> raise Eval_error)
+    | VRecFunand (idx, fns, oenv) ->
+        let (f, x, e) = List.nth fns (idx - 1) in
+        let env' = (x, eval env e2) :: (List.mapi (fun i (f, x, e) -> 
+                    (f, VRecFunand (i+1, fns, oenv))) fns) @ oenv in
+        eval env' e
+
     | _ -> raise Eval_error)
 
   | ERecFun (f, x, e1, e2) ->
@@ -167,12 +166,17 @@ let rec eval:env -> expr -> value = fun env expr -> match expr with
   | ETuple es ->
     let vs = List.map (eval env) es in VTuple vs
   
-  | ERecFunand (funs, e) ->
-      let new_env = 
-           List.map (fun (f, x, e') -> 
-             (f, VRecFunand (List.length funs, funs, env))) funs
-         in
-         eval (new_env @ env) e
+  | ERecFunand (fs, e) ->
+      let rec extend_env fs env = match fs with
+        | [] -> env
+        | (f, x, e') :: tail ->
+          let env' = (f, VRecFunand (1 + List.length tail, fs, env)) :: env in
+          extend_env tail env'
+      in
+      let env' = extend_env fs env in
+      eval env' e
+
+
 
 
 

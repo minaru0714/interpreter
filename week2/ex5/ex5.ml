@@ -48,11 +48,6 @@ let  interactive_loop () =
         print_newline ();
         loop ((f, VRecFun(f, x, exp, env)) :: env)
     
-        | CRecFunand fun_list ->
-          let extend_env env (f, x, e) =
-            (f, VRecFun(f, x, e, env)) :: env in
-          let rec new_env = List.fold_left extend_env env fun_list in
-          loop new_env
   
   with
     | Parsing.Parse_error -> print_endline "Parse Error!" (*解析エラー*)
