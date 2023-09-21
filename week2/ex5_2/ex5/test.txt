@@ -1,0 +1,13 @@
+let rec f x = g x
+and     g x = h x
+and     h x = x * 2
+in
+f 3;;
+
+
+    | VRecFunand (fn, xn, oenv) ->  
+      let xn_env =
+        xn |> List.mapi (fun fn (f, _, _) -> (f, VRecFunand (fn, xn, oenv)))
+      in
+      let _, x, e = List.nth xn fn in
+      eval ((x, eval env e2) :: xn_env @ oenv) e
