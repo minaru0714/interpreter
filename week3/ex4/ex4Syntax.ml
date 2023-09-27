@@ -163,16 +163,19 @@ let rec eval:env -> expr -> value = fun env expr -> match expr with
             
   | ETuple es ->
     let vs = List.map (eval env) es in VTuple vs
-  
+    
   | ERecFunand (fs, e) ->
-      let rec extend_env idx fs env = match fs with
-        | [] -> env
-        | (f, x, e') :: tail ->
-          let env' = (f, VRecFunand (idx, fs, env)) :: env in
-          extend_env (idx + 1) tail env'
-      in
-      let env' = extend_env 1 fs env in
-      eval env' e
+    let rec extend_env idx fs env = match fs with
+      | [] -> env
+      | (f, x, e') :: tail ->
+        let env' = (f, VRecFunand (idx, fs, env)) :: env in
+        extend_env (idx + 1) tail env'
+    in
+    let extended_env = extend_env 1 fs env in
+    let function_mappings = List.mapi (fun i (f, x, e) -> 
+        (f, VRecFunand (i+1, fs, extended_env))) fs 
+    in
+    eval (function_mappings @ extended_env) e
 
 
 

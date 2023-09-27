@@ -56,6 +56,10 @@ let rec ty_unify (constraints: ty_constraints) : ty_subst =
               aux (List.map (fun (t1', t2') -> (apply_ty_subst new_subst t1', apply_ty_subst new_subst t2')) rest) (compose_ty_subst new_subst subst)
           | (TFun (t1a, t1r), TFun (t2a, t2r)) :: rest -> 
               aux ((t1a, t2a) :: (t1r, t2r) :: rest) subst
+          | (TCons (t1a, t1r), TCons (t2a, t2r)) :: rest -> 
+              aux ((t1a, t2a) :: (t1r, t2r) :: rest) subst
+          | (TTuple ts1, TTuple ts2) :: rest when List.length ts1 = List.length ts2 -> 
+              aux (List.combine ts1 ts2 @ rest) subst    
           | _ :: rest -> raise (Unification_failure "Mismatched types")
         in
         aux constraints []
@@ -100,11 +104,10 @@ let rec gather_ty_constraints (env: ty_env) (e: expr) : ty * ty_constraints =
           let (ty3, constraints3) = gather_ty_constraints env e3 in
           (ty2, (ty1, TBool) :: (ty2, ty3) :: (constraints1 @ constraints2 @ constraints3))
     | ERecFun (f, v, e1, e2) ->
-                let arg_ty = TVar (new_ty_var ()) in
-                let ret_ty = TVar (new_ty_var ()) in
-                let (body_ty, constraints1) = gather_ty_constraints ((f, TFun (arg_ty, ret_ty)) :: (v, arg_ty) :: env) e1 in
-                let (rest_ty, constraints2) = gather_ty_constraints ((f, TFun (arg_ty, ret_ty)) :: env) e2 in
-                (rest_ty, (ret_ty, body_ty) :: (constraints1 @ constraints2))       
+          let fun_ty = TVar (new_ty_var ()) in
+          let (ty1, constraints1) = gather_ty_constraints ((f, fun_ty) :: env) e1 in
+          let (ty2, constraints2) = gather_ty_constraints ((f, fun_ty) :: env) e2 in
+          (ty2, (fun_ty, TFun(ty1, ty2)) :: (constraints1 @ constraints2))
     | ENil -> 
                 let list_ty = TVar (new_ty_var ()) in
                 (TCons (list_ty, TNil), [])      
@@ -148,18 +151,12 @@ let infer_cmd (env: ty_env) (cmd: command) : ty_env * ty_env =
       | CExp e -> 
           let (ty, new_env) = infer_expr env e in
           (env, new_env)   
-      | CLet (v, e) -> 
+          | CLet (v, e) -> 
           let (ty, new_env) = infer_expr env e in
-          ((v, ty) :: new_env, new_env) 
+          ((v, ty) :: env, new_env)
       | CRecFun (f, v, e) -> 
-          let arg_ty = TVar (new_ty_var ()) in
-          let ret_ty = TVar (new_ty_var ()) in
-          let (body_ty, constraints) = gather_ty_constraints ((f, TFun (arg_ty, ret_ty)) :: (v, arg_ty) :: env) e in
-          let subst = ty_unify constraints in
-          let fun_ty = apply_ty_subst subst (TFun (arg_ty, body_ty)) in
-          let new_env = List.map (fun (var_name, t) -> (var_name, apply_ty_subst subst t)) ((f, fun_ty) :: env) in
-          ((f, fun_ty) :: new_env, new_env)
-
+          let (ty, new_env) = infer_expr env e in
+          ((f, ty) :: env, new_env)
 
 
 let rec print_type (t: ty): unit =
