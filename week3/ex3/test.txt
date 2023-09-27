@@ -1,0 +1,11 @@
+ty_unify [(TFun (TVar "alpha", TVar "beta"), TFun (TBool, TVar "gamma"))];;
+
+ty_unify [(TFun (TVar "alpha", TVar "beta"), TFun (TBool, TVar "alpha"))];;
+
+ty_unify [(TFun (TVar "alpha", TVar "beta"), TFun (TVar "beta", TBool))];;
+
+ty_unify [(TFun (TVar "alpha", TVar "alpha"), TFun (TBool, TVar "gamma"))];;
+
+
+
+

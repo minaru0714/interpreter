@@ -1,5 +1,5 @@
-SOURCES = ex1Syntax.ml ex1Lexer.mll ex1Parser.mly ex1.ml
-RESULT  = ex1
+SOURCES = ex3Syntax.ml type.ml ex3Lexer.mll ex3Parser.mly ex3.ml 
+RESULT  = ex3
 
 YFLAGS = -v 
 

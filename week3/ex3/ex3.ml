@@ -1,6 +1,7 @@
 open Ex3Syntax
 open Ex3Parser
 open Ex3Lexer
+open Type
 
 
 (* ファイルから式を読み込んで評価する関数 *)
@@ -46,13 +47,7 @@ let  interactive_loop () =
         print_value value;
         print_newline ();
         loop ((f, VRecFun(f, x, exp, env)) :: env)
-        
-      | CRecFunand fun_list ->
-          let new_env = List.fold_left (fun env (f, x, e) -> 
-            (f, VRecFun(f, x, e, env)) :: env
-          ) env fun_list in
-          loop new_env
-      
+
   with
     | Parsing.Parse_error -> print_endline "Parse Error!" (*解析エラー*)
     | Eval_error -> print_endline "Eval Error!" (*評価エラー*)

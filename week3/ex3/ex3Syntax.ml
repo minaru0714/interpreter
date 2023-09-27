@@ -27,15 +27,15 @@ and expr = EValue of value
           | EApp of expr * expr
           | ERecFun of  name * name * expr * expr
           | EMatch of expr * (pattern * expr) list
-          | ENil                         
-          | ECons of expr * expr          
-          | ETuple of expr list           
+          | ENil                          (* [] *)
+          | ECons of expr * expr          (* e1 :: e2 *)
+          | ETuple of expr list           (* (e1, e2, ..., en) *)
           | ERecFunand of (name * name * expr) list * expr
            
 and command = CExp of expr
           | CLet of name * expr
-          | CRecFun of name * name * expr   
-          | CRecFunand of (name * name * expr) list       
+          | CRecFun of name * name * expr  
+              
 
 and pattern = PInt of int
              | PBool of bool
@@ -43,17 +43,6 @@ and pattern = PInt of int
              | PNil
              | PCons of pattern * pattern
              | PTuple of pattern list
-
-type tyvar = string 
-
-type ty = TInt                    
-         | TBool                   
-         | TFun of ty * ty       
-         | TVar of tyvar           
-         | TList of ty             
-         | TTuple of ty list   
-      
-type ty_subst = (tyvar * ty) list
 
 
 exception Eval_error
@@ -99,7 +88,7 @@ let rec eval:env -> expr -> value = fun env expr -> match expr with
            )
          | _ -> raise Eval_error
         )
-      | _ -> raise Eval_error  (* 未網羅のケース *)
+      | _ -> raise Eval_error  
     )
     
   | EEqual (e1, e2) ->
@@ -109,10 +98,9 @@ let rec eval:env -> expr -> value = fun env expr -> match expr with
         (match eval env e2 with
          | VBool _ -> raise Eval_error
          | VInt y -> if x = y then VBool true else VBool false
-         | _ -> raise Eval_error  (* 未網羅のケース *)
+         | _ -> raise Eval_error  
         )
-      | _ -> raise Eval_error  (* 未網羅のケース *)
-    )
+      | _ -> raise Eval_error  )
     
   | ECompare (e1, e2) ->
     (match eval env e1 with
@@ -121,9 +109,9 @@ let rec eval:env -> expr -> value = fun env expr -> match expr with
         (match eval env e2 with
          | VBool _ -> raise Eval_error
          | VInt y -> if x < y then VBool true else VBool false
-         | _ -> raise Eval_error  (* 未網羅のケース *)
+         | _ -> raise Eval_error  
         )
-      | _ -> raise Eval_error  (* 未網羅のケース *)
+      | _ -> raise Eval_error  
     )
     
   | EIf (e, e1, e2) ->
@@ -146,13 +134,11 @@ let rec eval:env -> expr -> value = fun env expr -> match expr with
       eval ((x, eval env e2) :: oenv ) e
     | VRecFun(f, x, e, oenv) ->
        let env' = (x, eval env e2) :: (f, VRecFun (f, x, e, oenv)) :: oenv in eval env' e 
-    | VRecFunand (fn, xn, oenv) ->  
-       (match xn |> List.find_opt (fun (f, _, _) -> List.exists (fun (fname, _, _) -> f = fname) xn) with
-       | Some (f, x, e) ->
-         let v = eval env e2 in
-         let new_env = (x, v) :: (xn |> List.map (fun (f, x, e) -> (f, VRecFunand (fn, xn, oenv)))) @ oenv in
-         eval new_env e
-       | None -> raise Eval_error)
+    | VRecFunand (idx, fns, oenv) ->
+        let (f, x, e) = List.nth fns (idx - 1) in
+        let env' = (x, eval env e2) :: (List.mapi (fun i (f, x, e) -> 
+                    (f, VRecFunand (i+1, fns, oenv))) fns) @ oenv in
+        eval env' e
     | _ -> raise Eval_error)
 
   | ERecFun (f, x, e1, e2) ->
@@ -178,11 +164,19 @@ let rec eval:env -> expr -> value = fun env expr -> match expr with
   | ETuple es ->
     let vs = List.map (eval env) es in VTuple vs
   
-  | ERecFunand (funs, e) ->
-      let new_env = funs |> List.mapi (fun i (f, x, e) -> (f, VRecFunand (i, funs, env))) in
-      eval (new_env @ env) e
+  | ERecFunand (fs, e) ->
+      let rec extend_env idx fs env = match fs with
+        | [] -> env
+        | (f, x, e') :: tail ->
+          let env' = (f, VRecFunand (idx, fs, env)) :: env in
+          extend_env (idx + 1) tail env'
+      in
+      let env' = extend_env 1 fs env in
+      eval env' e
 
 
+
+      
 
   let rec print_value : value -> unit  = fun  v ->
         match v with
@@ -220,17 +214,4 @@ let rec eval:env -> expr -> value = fun env expr -> match expr with
       print_string " :: ";
       print_value v2
 
-
-
-let rec apply_ty_subst (subst: ty_subst) (t: ty): ty =         (* 型代入を適用する関数 *)
-        match t with
-        | TInt | TBool -> t
-        | TFun (t1, t2) -> TFun (apply_ty_subst subst t1, apply_ty_subst subst t2)
-        | TVar v ->
-          (try List.assoc v subst with Not_found -> t)
-        | TList t -> TList (apply_ty_subst subst t)
-        | TTuple ts -> TTuple (List.map (apply_ty_subst subst) ts)
-    
-let compose_ty_subst (s1: ty_subst) (s2: ty_subst): ty_subst =   (* 型代入の合成を行う関数 *)
-        let apply_to_pair (v, t) = (v, apply_ty_subst s1 t) in
-        let s2' = List.map apply_to_pair s2 in  s1 @ s2'
+      
