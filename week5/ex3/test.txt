@@ -1,21 +1,29 @@
-fun x ->
-  match x with
-    (a, b) -> a
-  end;;
+let rec loop x = loop x;;
+    => loop : t1 -> t2
+
+課題3
+let rec loop = loop;;
+    => loop : t1
 
 
-fun x ->
-  match x with
-    (a, h :: t) -> h
-  end;;
+let rec loop = loop in loop;;
+    => 止まらない
 
 
-fun x ->
-  match x with
-    (a, h :: t) -> h
-  | (a, []) -> a * 2
-  end;;
+let rec fix = fun f -> f (fix f) in
+fix (fun f -> fun x -> if x < 1 then 1 else x * f (x - 1));;
+    => - : Int -> Int = <fun>
 
-fun x -> match x with end;;
 
-    => - : t1 -> t2
+let rec take n = fun l ->
+  if n < 1 then
+    []
+  else
+    match l with
+      h :: t -> h :: take (n - 1) t
+    | _ -> []
+    end
+in
+let rec mylist = 0 :: 1 :: mylist in
+take 5 mylist;;
+    => - : [Int] = [0,1,0,1,0]

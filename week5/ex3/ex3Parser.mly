@@ -1,5 +1,5 @@
 %{
-  open Ex5Syntax
+  open LazySyntax
 %}
 
 %token <int> INT
@@ -33,10 +33,10 @@
 
 
 %start main
-%type <Ex5Syntax.expr> main
+%type <LazySyntax.expr> main
 
 %start command
-%type <Ex5Syntax.command> command
+%type <LazySyntax.command> command
 %%
 
 
@@ -50,11 +50,13 @@ command:
   | expr SEMI { CExp $1 }
   | LET var EQ expr SEMI { CLet ($2, $4) }
   | LET REC var EQ FUN var ARROW expr SEMI { CRecFun ($3,$6,$8) } 
+  | LET REC var EQ expr SEMI { CRec ($3, $5) }
 ;
 ;
 
 expr:
   | LET var EQ expr IN expr      { ELet($2,$4,$6) }
+  | LET REC var EQ expr IN expr  { ERec ($3,$5,$7) }
   | LET REC var var EQ expr IN expr    { ERecFun ($3,$4,$6,$8) }
   | LET REC fun_list IN expr SEMI { ERecFunand ($3, $5) }
   | IF expr THEN expr ELSE expr  { EIf($2,$4,$6) }

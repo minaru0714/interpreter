@@ -1,4 +1,4 @@
-open Ex5Syntax 
+open LazySyntax 
 
 type tyvar = string 
 
@@ -160,7 +160,8 @@ let rec gather_ty_constraints (env: ty_env) (e: expr) : ty * ty_constraints =
     ) fntyvars fns) in
     let (rest_ty, rest_constraints) = gather_ty_constraints env_with_fns e in
     (rest_ty, constraints @ rest_constraints)
-      | EMatch (e, branches) ->
+    
+    | EMatch (e, branches) ->
           let (matched_ty, matched_constraints) = gather_ty_constraints env e in
           let branch_tys_and_constraints = List.map (fun (p, e_branch) -> 
               let (pat_ty, pat_env, pat_constraints) = gather_ty_constraints_pattern p in
@@ -171,7 +172,14 @@ let rec gather_ty_constraints (env: ty_env) (e: expr) : ty * ty_constraints =
           let all_constraints = matched_constraints @ (List.flatten branch_constraints_list) in
           let expected_ty = TVar (new_ty_var ()) in
           (expected_ty, List.map (fun ty -> (ty, expected_ty)) branch_tys @ all_constraints)
-      | _ -> failwith "Not yet implemented for this expression"
+    | ERec (x, e1, e2) ->
+        let (ty1, constraints1) = gather_ty_constraints env e1 in
+        let env' = (x, ty1) :: env in
+        let (ty2, constraints2) = gather_ty_constraints env' e2 in
+        (ty2, constraints1 @ constraints2)
+
+
+    | _ -> failwith "Not yet implemented for this expression"
   
 
 
@@ -196,7 +204,10 @@ let infer_cmd (env: ty_env) (cmd: command) : ty_env * ty_env =
       | CRecFun (f, v, e) -> 
           let (ty, new_env) = infer_expr env e in
           ((f, ty) :: env, new_env)
-
+      | CRec (x, e) ->
+          let (ty, new_env) = infer_expr env e in
+          ((x, ty) :: env, new_env)
+     
 
 
 let rec print_type (t: ty): unit =
