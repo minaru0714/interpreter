@@ -1,43 +1,19 @@
 
 
-      let rec print_type : ty -> unit =
-            fun t ->
-            match t with
-            TInt -> print_string "int"
-            | TBool -> print_string "bool"
-            | TFun (t1, t2) -> print_type t1; print_string " -> "; print_type t2
-            | TVar s -> print_string s
-            | TTuple (t1, t2) -> print_type t1; print_string " * "; print_type t2
-            | TNil ->
-              let s = new_ty_var () in
-              print_string s; print_string " list"
-            | TCons (t1, t2) -> print_type t1; print_string " list"
-          
-          let rec print_command_type : ty_env -> unit =
-            fun l ->
-            match l with
-            [] -> print_string ";"
-            | (name, t) :: [] ->
-              print_string (name ^ ": "); print_type t; print_string ";";
-            | (name, t) :: rest ->
-              print_string (name ^ ": "); print_type t; print_string "; "; print_command_type rest
-    
-
-
-
 fun x -> fun y -> x + (fun x -> if x then 1 else 2) y;;
+type:Int -> Bool -> Int = <fun>
 
-    => - : Int -> Bool -> Int = <fun>
 fun x -> fun y -> y x;;
+type:: t1 -> (t1 -> t2) -> t2 = <fun>
 
-    => - : t1 -> (t1 -> t2) -> t2 = <fun>
 fun x -> fun y -> fun z -> x z (y z);;
+   => type: : (t1 -> t2 -> t3) -> (t1 -> t2) -> t1 -> t3
 
-    => - : (t1 -> t2 -> t3) -> (t1 -> t2) -> t1 -> t3
 let rec fix f = fun x -> f (fix f) x in
 let fact = fix (fun f -> fun x -> if x < 1 then 1 else x * f (x - 1));;
 
     => fact : Int -> Int = <fun>
+
 let rec loop x -> loop x;;
 
     => loop : t1 -> t2
@@ -45,6 +21,9 @@ let rec f x = x + 1
     and g x = if x then f 1 else f 2
 in g true;;
 
+
+let rec fix f = fun x -> f (fix f) x in
+let fact = fix (fun f -> fun x -> if x < 1 then 1 else x * f (x - 1));;
     => - : Int = 2
 let f = fun x -> 1;;
 

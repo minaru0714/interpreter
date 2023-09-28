@@ -85,19 +85,20 @@ let rec gather_ty_constraints (env: ty_env) (e: expr) : ty * ty_constraints =
     | EVar v -> 
           (try (List.assoc v env, []) 
            with Not_found -> raise (Unification_failure "Variable not found"))
-    | EFun (v, e) -> 
-          let new_ty = TVar (new_ty_var ()) in
-          let (ty, constraints) = gather_ty_constraints ((v, new_ty) :: env) e in
-          (TFun (new_ty, ty), constraints)
-    | EApp (e1, e2) -> 
-          let (ty1, constraints1) = gather_ty_constraints env e1 in
-          let (ty2, constraints2) = gather_ty_constraints env e2 in
-          let new_ty = TVar (new_ty_var ()) in
-          (new_ty, (ty1, TFun (ty2, new_ty)) :: (constraints1 @ constraints2))
-    | ELet (v, e1, e2) -> 
-          let (ty1, constraints1) = gather_ty_constraints env e1 in
-          let (ty2, constraints2) = gather_ty_constraints ((v, ty1) :: env) e2 in
-          (ty2, constraints1 @ constraints2)
+   | EFun (v, e) -> 
+        let new_ty = TVar (new_ty_var ()) in
+        let (ty, constraints) = gather_ty_constraints ((v, new_ty) :: env) e in
+        (TFun (new_ty, ty), constraints)
+      | EApp (e1, e2) -> 
+        let (ty1, constraints1) = gather_ty_constraints env e1 in
+        let (ty2, constraints2) = gather_ty_constraints env e2 in
+        let new_ty = TVar (new_ty_var ()) in
+        (new_ty, (ty1, TFun (ty2, new_ty)) :: (constraints1 @ constraints2))
+      | ELet (v, e1, e2) -> 
+        let (ty1, constraints1) = gather_ty_constraints env e1 in
+        let env' = (v, ty1) :: env in
+        let (ty2, constraints2) = gather_ty_constraints env' e2 in
+        (ty2, constraints1 @ constraints2)
     | EIf (e1, e2, e3) -> 
           let (ty1, constraints1) = gather_ty_constraints env e1 in
           let (ty2, constraints2) = gather_ty_constraints env e2 in
