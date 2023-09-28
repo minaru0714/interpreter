@@ -1,5 +1,5 @@
-SOURCES = ex5Syntax.ml  type.ml ex5Lexer.mll ex5Parser.mly ex5.ml 
-RESULT  = ex5
+SOURCES = lazySyntax.ml  type.ml ex1Lexer.mll ex1Parser.mly ex1.ml 
+RESULT  = ex1
 
 YFLAGS = -v 
 

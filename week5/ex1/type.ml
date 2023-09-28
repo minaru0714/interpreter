@@ -1,4 +1,4 @@
-open Ex5Syntax 
+open LazySyntax 
 
 type tyvar = string 
 
@@ -190,7 +190,7 @@ let infer_cmd (env: ty_env) (cmd: command) : ty_env * ty_env =
       | CExp e -> 
           let (ty, new_env) = infer_expr env e in
           (env, new_env)   
-          | CLet (v, e) -> 
+      | CLet (v, e) -> 
           let (ty, new_env) = infer_expr env e in
           ((v, ty) :: env, new_env)
       | CRecFun (f, v, e) -> 

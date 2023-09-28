@@ -1,5 +1,5 @@
 {
-    open Ex5Parser
+    open Ex1Parser
 }
 
 let digit = ['0'-'9']

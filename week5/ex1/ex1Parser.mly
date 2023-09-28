@@ -1,5 +1,5 @@
 %{
-  open Ex5Syntax
+  open LazySyntax
 %}
 
 %token <int> INT
@@ -33,10 +33,10 @@
 
 
 %start main
-%type <Ex5Syntax.expr> main
+%type <LazySyntax.expr> main
 
 %start command
-%type <Ex5Syntax.command> command
+%type <LazySyntax.command> command
 %%
 
 
