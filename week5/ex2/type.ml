@@ -1,4 +1,4 @@
-open Ex5Syntax 
+open LazySyntax 
 
 type tyvar = string 
 

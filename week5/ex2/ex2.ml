@@ -1,6 +1,6 @@
-open Ex5Syntax
-open Ex5Parser
-open Ex5Lexer
+open LazySyntax
+open Ex2Parser
+open Ex2Lexer
 open Type
 
 (* ファイルから式を読み込んで評価する関数 *)
@@ -9,7 +9,7 @@ let rec evaluate_from_file filename:unit =
   let lexbuf = Lexing.from_channel stdin in
   let rec loop():unit =
   try
-    let result =  Ex5Parser.main  Ex5Lexer.token lexbuf in
+    let result =  Ex2Parser.main  Ex2Lexer.token lexbuf in
      print_value (eval [] result) ;  print_newline () ; (*改行*)
   loop ()
 with
@@ -22,7 +22,7 @@ in loop();
     let lexbuf = Lexing.from_channel stdin in
     let rec loop (ty_env, eval_env)  =
     try
-      let cmd =  Ex5Parser.command  Ex5Lexer.token lexbuf in
+      let cmd =  Ex2Parser.command  Ex2Lexer.token lexbuf in
       match cmd with
       | CExp exp ->
         let (inferred_type, new_ty_env) = infer_expr ty_env exp in
@@ -33,7 +33,7 @@ in loop();
         print_value value;
         print_newline ();
         loop (new_ty_env, eval_env)
-  
+        
       | CLet (var, exp) ->
         let (inferred_type, new_ty_env) = infer_expr ty_env exp in
         print_string (var ^ " : ");
@@ -44,8 +44,8 @@ in loop();
         let value = eval eval_env exp in
         print_value value;
         print_newline ();
-        loop (new_ty_env, (var, value) :: eval_env)
-  
+        loop (new_ty_env, (var, Thunk(EValue value, eval_env)) :: eval_env)
+ 
       | CRecFun (f, x, exp) -> 
         let (inferred_type, new_ty_env) = infer_expr ty_env exp in
         print_string (f ^ " : ");
@@ -56,7 +56,8 @@ in loop();
         let value = eval eval_env exp in
         print_value value;
         print_newline ();
-        loop (new_ty_env, (f, VRecFun(f, x, exp, eval_env)) :: eval_env)
+        loop (new_ty_env, (f, Thunk(EValue (VRecFun(f, x, exp, eval_env)), eval_env)) :: eval_env)
+    
   
     with
       | Parsing.Parse_error -> print_endline "Parse Error!" (*解析エラー*)
