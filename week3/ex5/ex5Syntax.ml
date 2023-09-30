@@ -2,7 +2,6 @@ type name = string
 
 type binOp = OpAdd | OpSub | OpMul | OpDiv
 
-
 and value = VInt of int 
             | VBool of bool
             | VFun of name * expr * env
@@ -27,7 +26,6 @@ and expr = EValue of value
           | EApp of expr * expr
           | ERecFun of  name * name * expr * expr
           | EMatch of expr * (pattern * expr) list
-          | ENil                          (* [] *)
           | ECons of expr * expr          (* e1 :: e2 *)
           | ETuple of expr list           (* (e1, e2, ..., en) *)
           | ERecFunand of (name * name * expr) list * expr
@@ -155,7 +153,6 @@ let rec eval:env -> expr -> value = fun env expr -> match expr with
               | None -> try_cases v rest) in
               try_cases v cases
 
-  | ENil -> VNil
 
   | ECons (e1, e2) ->
     let v1 = eval env e1 in
@@ -163,16 +160,19 @@ let rec eval:env -> expr -> value = fun env expr -> match expr with
             
   | ETuple es ->
     let vs = List.map (eval env) es in VTuple vs
-  
+    
   | ERecFunand (fs, e) ->
-      let rec extend_env idx fs env = match fs with
-        | [] -> env
-        | (f, x, e') :: tail ->
-          let env' = (f, VRecFunand (idx, fs, env)) :: env in
-          extend_env (idx + 1) tail env'
-      in
-      let env' = extend_env 1 fs env in
-      eval env' e
+    let rec extend_env idx fs env = match fs with
+      | [] -> env
+      | (f, x, e') :: tail ->
+        let env' = (f, VRecFunand (idx, fs, env)) :: env in
+        extend_env (idx + 1) tail env'
+    in
+    let extended_env = extend_env 1 fs env in
+    let function_mappings = List.mapi (fun i (f, x, e) -> 
+        (f, VRecFunand (i+1, fs, extended_env))) fs 
+    in
+    eval (function_mappings @ extended_env) e
 
 
 
@@ -183,8 +183,8 @@ let rec eval:env -> expr -> value = fun env expr -> match expr with
         | VBool true -> print_string "true"
         | VBool false -> print_string "false"
         | VInt i -> print_int i
-        | VFun _ -> print_string "<function>"
-        | VRecFun _ -> print_string "<rec_function>"
+        | VFun _ -> print_string "<fun>"
+        | VRecFun _ -> print_string "<fun>"
         | VNil -> print_string "[]"
         | VCons (v1, v2) ->
           print_cons v1 v2
@@ -196,7 +196,7 @@ let rec eval:env -> expr -> value = fun env expr -> match expr with
                 print_value v;
                 List.iter (fun v -> print_string ", "; print_value v) vs);
             print_string ")"
-        | VRecFunand (_, _, _) -> print_string "<rec_function_group>"
+        | VRecFunand (_, _, _) -> print_string "<fun>"
    
             
   and print_cons v1 v2 =

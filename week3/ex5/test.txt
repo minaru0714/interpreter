@@ -19,3 +19,19 @@ fun x ->
 fun x -> match x with end;;
 
     => - : t1 -> t2
+
+
+    fun x ->
+  match x with
+   (a, []) -> a * 2
+  end;;
+
+
+  fun x ->
+  match x with
+    2 -> 2
+  | 3 -> 3
+  end;;
+
+
+let rec loop x = loop x;;

@@ -43,20 +43,18 @@
 
 main:
  |expr EOF { $1 }
- | expr SEMI { $1 } 
-
+;
 
 command:
   | expr SEMI { CExp $1 }
-  | LET var EQ expr SEMI { CLet ($2, $4) }
-  | LET REC var EQ FUN var ARROW expr SEMI { CRecFun ($3,$6,$8) } 
-;
+  | LET var var_expr SEMI { CLet ($2, $3) }
+  | LET REC var var var_expr SEMI { CRecFun ($3, $4, $5) }
 ;
 
 expr:
-  | LET var EQ expr IN expr      { ELet($2,$4,$6) }
-  | LET REC var var EQ expr IN expr    { ERecFun ($3,$4,$6,$8) }
-  | LET REC fun_list IN expr SEMI { ERecFunand ($3, $5) }
+  | LET var var_expr IN expr      { ELet($2,$3,$5) }
+  | LET REC var var var_expr IN expr  { ERecFun ($3, $4, $5, $7) }
+  | LET REC var var var_expr  and_expr IN expr { ERecFunand ((($3,$4,$5) :: $6), $8) }
   | IF expr THEN expr ELSE expr  { EIf($2,$4,$6) }
   | expr EQ expr { EEqual($1, $3) }
   | expr LT expr { ECompare($1, $3) }
@@ -65,18 +63,36 @@ expr:
   | expr TIMES expr { EBin(OpMul, $1, $3) }
   | expr  DIV expr   { EBin(OpDiv, $1, $3) }
   | FUN var ARROW expr { EFun($2,$4) }
+  | FUN var var ARROW expr { EFun($2, EFun($3, $5)) }
   | expr apply_expr    {EApp ($1,$2)}
   | MATCH expr WITH pattern_expr END { EMatch ($2, $4) }
   | expr CONS expr { ECons ($1, $3) }
+  | cons_expr  { $1 }
   | apply_expr { $1 }
 ;
 
-fun_list:
-  | var EQ FUN var ARROW expr { [($1, $4, $6)] }
-  | var EQ FUN var ARROW expr AND fun_list { ($1, $4, $6) :: $8 }
+
+var_expr:
+  | EQ expr { $2 }
+  | var var_expr { EFun ($1, $2) }
 ;
 
 
+and_expr:
+  | AND var var EQ expr and_expr  { ($2,$3,$5) :: $6 }
+  |                         { [] }
+;
+
+cons_expr:
+  | noncons_expr                     { $1 }
+  | expr CONS cons_expr              { ECons ($1, $3) }
+  ;
+
+noncons_expr:
+  | apply_expr                       { $1 }
+  | LPAR expr COMMA expr_list RPAR   { ETuple ($2 :: $4) }
+  ;
+  
 expr_list:
   | expr { [$1] }
   | expr COMMA expr_list { $1 :: $3 }
@@ -84,7 +100,6 @@ expr_list:
 
 
 pattern_expr :
-  | { [] } 
   | pattern ARROW expr  { [($1, $3)] }
   | pattern ARROW expr OR pattern_expr { ($1, $3) :: $5 }
 ;
@@ -108,7 +123,7 @@ apply_expr:
   | BOOL            { EValue (VBool $1) }
   | ID              { EVar $1 }
   | LPAR expr RPAR  { $2 }
-  | LBRACKET  RBRACKET { ENil }
+  | LBRACKET  RBRACKET { EValue VNil  }
 ;
 
 
