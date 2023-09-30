@@ -43,9 +43,6 @@ let  interactive_loop () =
       | CRecFun (f, x, exp) -> 
         print_string f;
         print_string " = ";
-        let value = eval env exp in
-        print_value value;
-        print_newline ();
         loop ((f, VRecFun(f, x, exp, env)) :: env)
     
   
