@@ -18,7 +18,8 @@ with
 in loop();
   close_in channel 
 
-  let interactive_loop () =
+
+let interactive_loop () =
     let lexbuf = Lexing.from_channel stdin in
     let rec loop (ty_env, eval_env)  =
     try
@@ -46,18 +47,18 @@ in loop();
         print_newline ();
         loop (new_ty_env, (var, value) :: eval_env)
   
-      | CRecFun (f, x, exp) -> 
-        let (inferred_type, new_ty_env) = infer_expr ty_env exp in
-        print_string (f ^ " : ");
-        print_type inferred_type;
-        print_newline ();
-        print_string f;
-        print_string " = ";
-        let value = eval eval_env exp in
-        print_value value;
+     | CRecFun (f, x, exp) as cmd -> 
+      let (inferred_type, new_ty_env) = infer_cmd ty_env cmd in
+      let print_ty_env env =
+          List.iter (fun (var, t) -> 
+              print_string (var ^ ": ");
+              print_type t;
+              print_newline ();
+          ) env in
+        print_ty_env inferred_type;
         print_newline ();
         loop (new_ty_env, (f, VRecFun(f, x, exp, eval_env)) :: eval_env)
-  
+       
     with
       | Parsing.Parse_error -> print_endline "Parse Error!" (*解析エラー*)
       | Eval_error -> print_endline "Eval Error!" (*評価エラー*)

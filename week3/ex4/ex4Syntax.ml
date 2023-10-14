@@ -2,7 +2,6 @@ type name = string
 
 type binOp = OpAdd | OpSub | OpMul | OpDiv
 
-
 and value = VInt of int 
             | VBool of bool
             | VFun of name * expr * env
@@ -27,7 +26,6 @@ and expr = EValue of value
           | EApp of expr * expr
           | ERecFun of  name * name * expr * expr
           | EMatch of expr * (pattern * expr) list
-          | ENil                          (* [] *)
           | ECons of expr * expr          (* e1 :: e2 *)
           | ETuple of expr list           (* (e1, e2, ..., en) *)
           | ERecFunand of (name * name * expr) list * expr
@@ -155,7 +153,6 @@ let rec eval:env -> expr -> value = fun env expr -> match expr with
               | None -> try_cases v rest) in
               try_cases v cases
 
-  | ENil -> VNil
 
   | ECons (e1, e2) ->
     let v1 = eval env e1 in

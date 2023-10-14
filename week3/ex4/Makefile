@@ -1,4 +1,4 @@
-SOURCES = ex4Syntax.ml  ex4Lexer.mll ex4Parser.mly ex4.ml type.ml
+SOURCES = ex4Syntax.ml  type.ml ex4Lexer.mll ex4Parser.mly ex4.ml 
 RESULT  = ex4
 
 YFLAGS = -v 
