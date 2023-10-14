@@ -21,19 +21,18 @@ type expr = EValue of value
           | EApp of expr * expr
           | ERecFun of  name * name * expr * expr
           | EMatch of expr * (pattern * expr) list
-          | ENil                          (* [] *)
           | ECons of expr * expr          (* e1 :: e2 *)
           | ETuple of expr list           (* (e1, e2, ..., en) *)
           | ERecFunand of (name * name * expr) list * expr
-          | ERec of name * expr * expr  (* let rec x = e1 in e2 *)
+          | ELetRec of name * expr * expr
 and env = (name * thunk) list
 and value = VInt of int
           | VBool of bool
           | VFun of name * expr * env
           | VRecFun of name * name * expr * env
           | VNil
-          | VCons of thunk * thunk     
-          | VTuple of thunk list       
+          | VCons of value * value
+          | VTuple of value list
           | VRecFunand of int * (name * name * expr) list * env
 and thunk = Thunk of expr * env
 
@@ -42,7 +41,6 @@ and thunk = Thunk of expr * env
 type command = CExp of expr
              | CLet of name * expr
              | CRecFun of name * name * expr
-             | CRec of name * expr  (* let rec x = e *)
 
 
 exception Eval_error
@@ -53,15 +51,12 @@ let rec find_match : pattern -> value -> env option = fun p v ->
   | PBool b1, VBool b2 -> if b1 = b2 then Some [] else None
   | PVar x, _ -> Some [(x, Thunk (EValue v, []))]
   | PNil, VNil -> Some []
-  | PCons(p1, p2), VCons(Thunk (e1, env1), Thunk (e2, env2)) ->
-    let v1 = eval env1 e1 in
-    let v2 = eval env2 e2 in
+  | PCons(p1, p2), VCons(v1, v2) ->
     (match find_match p1 v1, find_match p2 v2 with
     | Some env1, Some env2 -> Some (env1 @ env2)
     | _, _ -> None)
-  | PTuple ps, VTuple thunks ->
+  | PTuple ps, VTuple vs ->
       (try
-        let vs = List.map force thunks in
         let options = List.map2 find_match ps vs in
         let env_option = List.fold_left (fun acc_opt env_opt ->
           match acc_opt, env_opt with
@@ -72,8 +67,7 @@ let rec find_match : pattern -> value -> env option = fun p v ->
       with Invalid_argument _ -> None)
   | _, _ -> None
 
-
-and force (Thunk (e, env)) = eval env e
+let rec force (Thunk (e, env)) = eval env e
 
 and eval : env -> expr -> value = fun env expr ->
   match expr with
@@ -138,7 +132,7 @@ and eval : env -> expr -> value = fun env expr ->
 
 | EFun (x, e) ->
     VFun (x, e, env)
-
+    
 | EApp (e1, e2) ->
     (match eval env e1 with
     | VFun (x, e, oenv) -> 
@@ -169,16 +163,12 @@ and eval : env -> expr -> value = fun env expr ->
                 | None -> try_cases v rest) in
                 try_cases v cases
   
-  | ENil -> VNil
-  
   | ECons (e1, e2) ->
-    let v1 = Thunk (e1, env) in
-    let v2 = Thunk (e2, env) in 
-    VCons (v1, v2)
-
+      let v1 = eval env e1 in
+      let v2 = eval env e2 in VCons (v1, v2)
+              
   | ETuple es ->
-    let vs = List.map (fun e -> Thunk (e, env)) es in
-    VTuple vs
+      let vs = List.map (eval env) es in VTuple vs
     
   | ERecFunand (fs, e) ->
     let rec extend_env idx fs env = match fs with
@@ -189,9 +179,9 @@ and eval : env -> expr -> value = fun env expr ->
     in
     let env' = extend_env 1 fs env in
     eval env' e
-    
-  | ERec (x, e1, e2) ->
-    let env' = (x, Thunk (e1, env)) :: env in
+  
+  | ELetRec (f, e1, e2) ->
+    let rec env' = (f, Thunk(e1, env')) :: env in
     eval env' e2
 
   
@@ -205,17 +195,16 @@ let rec print_value (v: value) : unit =
   | VRecFun _ -> print_string "<fun>"
   | VNil -> print_string "[]"
   | VCons (v1, v2) ->
-    print_cons (force v1) (force v2)
+    print_cons v1 v2
   | VTuple vs ->
     print_string "(";
     (match vs with
     | [] -> ()
     | v :: vs ->
-        print_value (force v);
-        List.iter (fun v -> print_string ", "; print_value (force v)) vs);
+        print_value v;
+        List.iter (fun v -> print_string ", "; print_value v) vs);
     print_string ")"
   | VRecFunand (_, _, _) -> print_string "<fun>"
-
 
     
 and print_cons v1 v2 =

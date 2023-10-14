@@ -1,0 +1,19 @@
+
+let rec ones = 1 :: ones
+let rec nats_from n = n :: nats_from (n + 1)
+let nats = nats_from 0
+let rec fibs_from a b = a :: fibs_from b (a + b)
+let fibs = fibs_from 1 1
+
+
+let rec unfold f b =
+  match f b with
+  | None -> []
+  | Some ((x, y), next_b) -> (x, y) :: unfold f next_b
+
+let natPairs =
+  let rec next_pair = function
+    | (0, y) -> Some ((0, y), (y + 1, 0))
+    | (x, y) -> Some ((x, y), (x - 1, y + 1))
+  in
+  unfold next_pair (0, 0)
