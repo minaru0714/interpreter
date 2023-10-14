@@ -1,26 +1,21 @@
-fun x ->
-  match x with
-    (a, b) -> a
-  end;;
+
+まずはloop関数を定義
+let rec loop x = loop x;;
 
 
-fun x ->
-  match x with
-    (a, h :: t) -> h
-  end;;
+課題1
+let z = loop ();;
 
 
-fun x ->
-  match x with
-    (a, h :: t) -> h
-  | (a, []) -> a * 2
-  end;;
+(fun x -> 42) (loop ());;
 
-fun x -> match x with end;;
 
-    => - : t1 -> t2
+(fun x -> fun y -> x) 5 (loop ());;
 
 
 
 
-    
+とまらない
+loop ();;
+(fun x -> fun y -> x) (loop ()) 5;;
+

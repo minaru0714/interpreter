@@ -21,7 +21,6 @@ type expr = EValue of value
           | EApp of expr * expr
           | ERecFun of  name * name * expr * expr
           | EMatch of expr * (pattern * expr) list
-          | ENil                          (* [] *)
           | ECons of expr * expr          (* e1 :: e2 *)
           | ETuple of expr list           (* (e1, e2, ..., en) *)
           | ERecFunand of (name * name * expr) list * expr
@@ -125,6 +124,14 @@ and eval : env -> expr -> value = fun env expr ->
 | EVar x -> 
     let thk = List.assoc x env in
     force thk
+
+| ELet (x, e1, e2) ->
+    let v1 = eval env e1 in
+    eval ((x, Thunk (EValue v1, [])) :: env) e2
+
+| EFun (x, e) ->
+    VFun (x, e, env)
+    
 | EApp (e1, e2) ->
     (match eval env e1 with
     | VFun (x, e, oenv) -> 
@@ -154,8 +161,6 @@ and eval : env -> expr -> value = fun env expr ->
                 | Some nenv -> eval (nenv @ env) e'
                 | None -> try_cases v rest) in
                 try_cases v cases
-  
-  | ENil -> VNil
   
   | ECons (e1, e2) ->
       let v1 = eval env e1 in

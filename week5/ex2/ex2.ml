@@ -46,15 +46,15 @@ in loop();
         print_newline ();
         loop (new_ty_env, (var, Thunk(EValue value, eval_env)) :: eval_env)
  
-      | CRecFun (f, x, exp) -> 
-        let (inferred_type, new_ty_env) = infer_expr ty_env exp in
-        print_string (f ^ " : ");
-        print_type inferred_type;
-        print_newline ();
-        print_string f;
-        print_string " = ";
-        let value = eval eval_env exp in
-        print_value value;
+      | CRecFun (f, x, exp) as cmd -> 
+      let (inferred_type, new_ty_env) = infer_cmd ty_env cmd in
+      let print_ty_env env =
+          List.iter (fun (var, t) -> 
+              print_string (var ^ ": ");
+              print_type t;
+              print_newline ();
+          ) env in
+        print_ty_env inferred_type;
         print_newline ();
         loop (new_ty_env, (f, Thunk(EValue (VRecFun(f, x, exp, eval_env)), eval_env)) :: eval_env)
     
