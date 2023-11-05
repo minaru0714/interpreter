@@ -49,12 +49,13 @@ command:
   | expr SEMI { CExp $1 }
   | LET var var_expr SEMI { CLet ($2, $3) }
   | LET REC var var var_expr SEMI { CRecFun ($3, $4, $5) }
+  | LET REC var var var_expr and_expr SEMI { CRecFunand (($3, $4, $5) :: $6) }
 ;
 
 expr:
   | LET var var_expr IN expr      { ELet($2,$3,$5) }
   | LET REC var var var_expr IN expr  { ERecFun ($3, $4, $5, $7) }
-  | LET REC var var var_expr  and_expr IN expr { ERecFunand ((($3,$4,$5) :: $6), $8) }
+  | LET REC var var EQ expr and_expr IN expr { ERecFunand ((($3,$4,$6) :: $7), $9) }
   | IF expr THEN expr ELSE expr  { EIf($2,$4,$6) }
   | expr EQ expr { EEqual($1, $3) }
   | expr LT expr { ECompare($1, $3) }
@@ -71,15 +72,13 @@ expr:
   | apply_expr { $1 }
 ;
 
-
 var_expr:
   | EQ expr { $2 }
   | var var_expr { EFun ($1, $2) }
 ;
 
-
 and_expr:
-  | AND var var EQ expr and_expr  { ($2,$3,$5) :: $6 }
+  | AND var var var_expr and_expr  { ($2,$3,$4) :: $5 }
   |                         { [] }
 ;
 
@@ -100,6 +99,7 @@ expr_list:
 
 
 pattern_expr :
+  | { [] }
   | pattern ARROW expr  { [($1, $3)] }
   | pattern ARROW expr OR pattern_expr { ($1, $3) :: $5 }
 ;

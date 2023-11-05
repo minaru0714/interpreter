@@ -58,7 +58,27 @@ let interactive_loop () =
         print_ty_env inferred_type;
         print_newline ();
         loop (new_ty_env, (f, VRecFun(f, x, exp, eval_env)) :: eval_env)
-       
+     
+     | CRecFunand fs -> 
+      let tuple_expr = ERecFunand(fs, ETuple(List.map(fun(f,_,_) -> EVar f)fs)) in   
+      let (tuple_type, new_ty_env) = infer_expr ty_env tuple_expr in
+      match tuple_type with
+      | TTuple types when List.length types = List.length fs ->
+      let new_type_env = List.fold_left2 (fun env (f,_,_) t -> (f, t) :: env ) new_ty_env fs types in
+       (*let rec extend_env idx fs env = match fs with
+        | [] -> env
+        | (f, x, e') :: tail ->
+          let env' = (f, VRecFunand (idx, fs, env)) :: env in
+          extend_env (idx + 1) tail env'
+          in
+        let extended_env = extend_env 1 fs eval_env in*)
+        let function_mappings = List.mapi (fun i (f, x, e) -> 
+          (f, VRecFunand (i+1, fs, eval_env))) fs 
+        in
+        let eval_new_env = (function_mappings @ eval_env) in
+      loop(new_type_env, eval_new_env)
+      | _ -> failwith "Error"
+
     with
       | Parsing.Parse_error -> print_endline "Parse Error!" (*解析エラー*)
       | Eval_error -> print_endline "Eval Error!" (*評価エラー*)

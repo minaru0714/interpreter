@@ -33,6 +33,7 @@ and expr = EValue of value
 and command = CExp of expr
           | CLet of name * expr
           | CRecFun of name * name * expr  
+          | CRecFunand  of (name * name * expr) list
               
 
 and pattern = PInt of int

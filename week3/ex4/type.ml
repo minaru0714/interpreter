@@ -72,8 +72,28 @@ let new_ty_var () =
    let v = !ty_var_counter in
    ty_var_counter := v + 1;
    "t" ^ string_of_int v
-   
-   
+
+   let rec gather_ty_constraints_pattern (p: pattern) : ty * ty_env * ty_constraints =
+    match p with
+    | PInt _ -> (TInt, [], [])
+    | PBool _ -> (TBool, [], [])
+    | PVar x -> 
+        let t = TVar (new_ty_var ()) in
+        (t, [(x, t)], [])
+    | PNil -> (TList (TVar (new_ty_var ())), [], [])
+    | PCons (p1, p2) -> 
+        let (head_ty, head_env, head_constraints) = gather_ty_constraints_pattern p1 in
+        let (tail_ty, tail_env, tail_constraints) = gather_ty_constraints_pattern p2 in
+        (TList head_ty, head_env @ tail_env, (TList head_ty, tail_ty) :: head_constraints @ tail_constraints)
+    | PTuple ps ->
+        let pts = List.map gather_ty_constraints_pattern ps in
+        let ts = List.map (fun (t, _, _) -> t) pts in
+        let envs = List.map (fun (_, env, _) -> env) pts in
+        let constrs = List.map (fun (_, _, c) -> c) pts in
+        (TTuple ts, List.flatten envs, List.flatten constrs)
+
+
+
 let rec gather_ty_constraints ty_env = function
     | EValue v ->
         (match v with 
@@ -128,23 +148,33 @@ let rec gather_ty_constraints ty_env = function
         let t2, c2 = gather_ty_constraints ((f, TFun(t_var_arg, t1)) :: ty_env) e2 in
         (t2, (TFun(t_var_arg, t_var_res), TFun(t_var_arg, t1)) :: c1 @ c2)
     | ERecFunand (bindings, e) ->
-        let new_ty_env = List.fold_left (fun acc (f, x, _) -> 
-            let t_var_name_f = new_ty_var () in
-            let t_var_name_x = new_ty_var () in
-            let t_var_f = TVar t_var_name_f in  
-            let t_var_x = TVar t_var_name_x in  
-            (f, TFun(t_var_x, t_var_f)) :: (x, t_var_x) :: acc
-        ) ty_env bindings in
-        let cs = List.flatten (List.map (fun (f, x, ex) -> 
-            let t, c = gather_ty_constraints new_ty_env ex in
-            c @ [(List.assoc f new_ty_env, TFun(List.assoc x new_ty_env, t))]
-        ) bindings) in
+        let t_vars_x_and_res = List.init (List.length bindings) (fun _ -> (TVar (new_ty_var()), TVar (new_ty_var()))) in 
+        let additional = List.map2 (fun (f, _, _) (x_var, res_var) -> (f, TFun(x_var, res_var))) bindings t_vars_x_and_res in 
+        let new_ty_env = additional @ ty_env in 
+
+        let cs_list = List.map2 (fun (f, x, ex) (x_var, res_var) -> 
+                let new_ty_env = (x, x_var) :: new_ty_env in 
+                let t, c = gather_ty_constraints new_ty_env ex in
+                (res_var, t) :: c
+            ) bindings t_vars_x_and_res 
+        in 
+        let cs = List.flatten cs_list in
         let t, c = gather_ty_constraints new_ty_env e in
         (t, cs @ c)
     
+      | EMatch (e, branches) ->
+          let (matched_ty, matched_constraints) = gather_ty_constraints ty_env e in
+          let branch_tys_and_constraints = List.map (fun (p, e_branch) -> 
+              let (pat_ty, pat_env, pat_constraints) = gather_ty_constraints_pattern p in
+              let (branch_ty, branch_constraints) = gather_ty_constraints (pat_env @ ty_env) e_branch in
+              (branch_ty, (matched_ty, pat_ty) :: (branch_constraints @ pat_constraints))
+          ) branches in
+          let branch_tys, branch_constraints_list = List.split branch_tys_and_constraints in
+          let all_constraints = matched_constraints @ (List.flatten branch_constraints_list) in
+          let expected_ty = TVar (new_ty_var ()) in
+          (expected_ty, List.map (fun ty -> (ty, expected_ty)) branch_tys @ all_constraints)
 
-    | _ -> failwith "Not yet implemented for this expression"          
-   
+  
 
    
 let infer_expr (env: ty_env) (e: expr) : ty * ty_env =
@@ -163,13 +193,18 @@ let infer_cmd (env: ty_env) (cmd: command) : ty_env * ty_env =
           (env, new_env)   
       | CLet (v, e) -> 
           let (ty, new_env) = infer_expr env e in
-          ([(v, ty)], new_env)
+          ([(v, ty)], (v, ty) :: new_env)
       | CRecFun(f, v, e) ->   
-          let t_var_arg = TVar (new_ty_var ()) in
-          let t_var_res = TVar (new_ty_var ()) in
-          let (ty, new_env) = infer_expr ((f, TFun(t_var_arg, t_var_res)) :: (v, t_var_arg) :: env) e in
+          let (ty, new_env) = infer_expr env (ERecFun (f, v, e, EVar f)) in
           let print_env = [(f, ty)] in
-          (print_env , new_env)
+          (print_env , (f, ty) :: new_env)
+      | CRecFunand bindings -> 
+          let new_envs = List.map (fun (f, v, e) -> 
+              let (ty, _) = infer_expr env (ERecFun (f, v, e, EVar f)) in
+              (f, ty)
+          ) bindings in
+          (new_envs, new_envs @ env)
+
 
 
 

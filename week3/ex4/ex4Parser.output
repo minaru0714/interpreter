@@ -5,63 +5,65 @@
    2  command : expr SEMI
    3          | LET var var_expr SEMI
    4          | LET REC var var var_expr SEMI
+   5          | LET REC var var var_expr and_expr SEMI
 
-   5  expr : LET var var_expr IN expr
-   6       | LET REC var var var_expr IN expr
-   7       | LET REC var var var_expr and_expr IN expr
-   8       | IF expr THEN expr ELSE expr
-   9       | expr EQ expr
-  10       | expr LT expr
-  11       | expr PLUS expr
-  12       | expr MINUS expr
-  13       | expr TIMES expr
-  14       | expr DIV expr
-  15       | FUN var ARROW expr
-  16       | FUN var var ARROW expr
-  17       | expr apply_expr
-  18       | MATCH expr WITH pattern_expr END
-  19       | expr CONS expr
-  20       | cons_expr
-  21       | apply_expr
+   6  expr : LET var var_expr IN expr
+   7       | LET REC var var var_expr IN expr
+   8       | LET REC var var EQ expr and_expr IN expr
+   9       | IF expr THEN expr ELSE expr
+  10       | expr EQ expr
+  11       | expr LT expr
+  12       | expr PLUS expr
+  13       | expr MINUS expr
+  14       | expr TIMES expr
+  15       | expr DIV expr
+  16       | FUN var ARROW expr
+  17       | FUN var var ARROW expr
+  18       | expr apply_expr
+  19       | MATCH expr WITH pattern_expr END
+  20       | expr CONS expr
+  21       | cons_expr
+  22       | apply_expr
 
-  22  var_expr : EQ expr
-  23           | var var_expr
+  23  var_expr : EQ expr
+  24           | var var_expr
 
-  24  and_expr : AND var var EQ expr and_expr
-  25           |
+  25  and_expr : AND var var var_expr and_expr
+  26           |
 
-  26  cons_expr : noncons_expr
-  27            | expr CONS cons_expr
+  27  cons_expr : noncons_expr
+  28            | expr CONS cons_expr
 
-  28  noncons_expr : apply_expr
-  29               | LPAR expr COMMA expr_list RPAR
+  29  noncons_expr : apply_expr
+  30               | LPAR expr COMMA expr_list RPAR
 
-  30  expr_list : expr
-  31            | expr COMMA expr_list
+  31  expr_list : expr
+  32            | expr COMMA expr_list
 
-  32  pattern_expr : pattern ARROW expr
-  33               | pattern ARROW expr OR pattern_expr
+  33  pattern_expr :
+  34               | pattern ARROW expr
+  35               | pattern ARROW expr OR pattern_expr
 
-  34  pattern : INT
-  35          | BOOL
-  36          | ID
-  37          | LBRACKET RBRACKET
-  38          | LPAR pattern COMMA pattern_list RPAR
-  39          | pattern CONS pattern
+  36  pattern : INT
+  37          | BOOL
+  38          | ID
+  39          | LBRACKET RBRACKET
+  40          | LPAR pattern COMMA pattern_list RPAR
+  41          | pattern CONS pattern
 
-  40  pattern_list : pattern
-  41               | pattern COMMA pattern_list
+  42  pattern_list : pattern
+  43               | pattern COMMA pattern_list
 
-  42  apply_expr : INT
-  43             | BOOL
-  44             | ID
-  45             | LPAR expr RPAR
-  46             | LBRACKET RBRACKET
+  44  apply_expr : INT
+  45             | BOOL
+  46             | ID
+  47             | LPAR expr RPAR
+  48             | LBRACKET RBRACKET
 
-  47  var : ID
+  49  var : ID
 
-  48  %entry% : '\001' main
-  49          | '\002' command
+  50  %entry% : '\001' main
+  51          | '\002' command
 
 state 0
 	$accept : . %entry% $end  (0)
@@ -74,7 +76,7 @@ state 0
 
 
 state 1
-	%entry% : '\001' . main  (48)
+	%entry% : '\001' . main  (50)
 
 	INT  shift 4
 	BOOL  shift 5
@@ -95,7 +97,7 @@ state 1
 
 
 state 2
-	%entry% : '\002' . command  (49)
+	%entry% : '\002' . command  (51)
 
 	INT  shift 4
 	BOOL  shift 5
@@ -122,27 +124,27 @@ state 3
 
 
 state 4
-	apply_expr : INT .  (42)
-
-	.  reduce 42
-
-
-state 5
-	apply_expr : BOOL .  (43)
-
-	.  reduce 43
-
-
-state 6
-	apply_expr : ID .  (44)
+	apply_expr : INT .  (44)
 
 	.  reduce 44
 
 
+state 5
+	apply_expr : BOOL .  (45)
+
+	.  reduce 45
+
+
+state 6
+	apply_expr : ID .  (46)
+
+	.  reduce 46
+
+
 state 7
-	expr : LET . var var_expr IN expr  (5)
-	expr : LET . REC var var var_expr IN expr  (6)
-	expr : LET . REC var var var_expr and_expr IN expr  (7)
+	expr : LET . var var_expr IN expr  (6)
+	expr : LET . REC var var var_expr IN expr  (7)
+	expr : LET . REC var var EQ expr and_expr IN expr  (8)
 
 	ID  shift 21
 	REC  shift 22
@@ -152,7 +154,7 @@ state 7
 
 
 state 8
-	expr : IF . expr THEN expr ELSE expr  (8)
+	expr : IF . expr THEN expr ELSE expr  (9)
 
 	INT  shift 4
 	BOOL  shift 5
@@ -172,8 +174,8 @@ state 8
 
 
 state 9
-	noncons_expr : LPAR . expr COMMA expr_list RPAR  (29)
-	apply_expr : LPAR . expr RPAR  (45)
+	noncons_expr : LPAR . expr COMMA expr_list RPAR  (30)
+	apply_expr : LPAR . expr RPAR  (47)
 
 	INT  shift 4
 	BOOL  shift 5
@@ -193,8 +195,8 @@ state 9
 
 
 state 10
-	expr : FUN . var ARROW expr  (15)
-	expr : FUN . var var ARROW expr  (16)
+	expr : FUN . var ARROW expr  (16)
+	expr : FUN . var var ARROW expr  (17)
 
 	ID  shift 21
 	.  error
@@ -203,7 +205,7 @@ state 10
 
 
 state 11
-	expr : MATCH . expr WITH pattern_expr END  (18)
+	expr : MATCH . expr WITH pattern_expr END  (19)
 
 	INT  shift 4
 	BOOL  shift 5
@@ -223,29 +225,29 @@ state 11
 
 
 state 12
-	apply_expr : LBRACKET . RBRACKET  (46)
+	apply_expr : LBRACKET . RBRACKET  (48)
 
 	RBRACKET  shift 28
 	.  error
 
 
 state 13
-	%entry% : '\001' main .  (48)
+	%entry% : '\001' main .  (50)
 
-	.  reduce 48
+	.  reduce 50
 
 
 state 14
 	main : expr . EOF  (1)
-	expr : expr . EQ expr  (9)
-	expr : expr . LT expr  (10)
-	expr : expr . PLUS expr  (11)
-	expr : expr . MINUS expr  (12)
-	expr : expr . TIMES expr  (13)
-	expr : expr . DIV expr  (14)
-	expr : expr . apply_expr  (17)
-	expr : expr . CONS expr  (19)
-	cons_expr : expr . CONS cons_expr  (27)
+	expr : expr . EQ expr  (10)
+	expr : expr . LT expr  (11)
+	expr : expr . PLUS expr  (12)
+	expr : expr . MINUS expr  (13)
+	expr : expr . TIMES expr  (14)
+	expr : expr . DIV expr  (15)
+	expr : expr . apply_expr  (18)
+	expr : expr . CONS expr  (20)
+	cons_expr : expr . CONS cons_expr  (28)
 
 	INT  shift 4
 	BOOL  shift 5
@@ -265,54 +267,55 @@ state 14
 	apply_expr  goto 38
 
 
-15: reduce/reduce conflict (reduce 21, reduce 28) on INT
-15: reduce/reduce conflict (reduce 21, reduce 28) on BOOL
-15: reduce/reduce conflict (reduce 21, reduce 28) on ID
-15: reduce/reduce conflict (reduce 21, reduce 28) on IN
-15: reduce/reduce conflict (reduce 21, reduce 28) on PLUS
-15: reduce/reduce conflict (reduce 21, reduce 28) on MINUS
-15: reduce/reduce conflict (reduce 21, reduce 28) on TIMES
-15: reduce/reduce conflict (reduce 21, reduce 28) on DIV
-15: reduce/reduce conflict (reduce 21, reduce 28) on EQ
-15: reduce/reduce conflict (reduce 21, reduce 28) on LT
-15: reduce/reduce conflict (reduce 21, reduce 28) on THEN
-15: reduce/reduce conflict (reduce 21, reduce 28) on ELSE
-15: reduce/reduce conflict (reduce 21, reduce 28) on LPAR
-15: reduce/reduce conflict (reduce 21, reduce 28) on RPAR
-15: reduce/reduce conflict (reduce 21, reduce 28) on WITH
-15: reduce/reduce conflict (reduce 21, reduce 28) on OR
-15: reduce/reduce conflict (reduce 21, reduce 28) on END
-15: reduce/reduce conflict (reduce 21, reduce 28) on SEMI
-15: reduce/reduce conflict (reduce 21, reduce 28) on EOF
-15: reduce/reduce conflict (reduce 21, reduce 28) on COMMA
-15: reduce/reduce conflict (reduce 21, reduce 28) on CONS
-15: reduce/reduce conflict (reduce 21, reduce 28) on LBRACKET
-15: reduce/reduce conflict (reduce 21, reduce 28) on AND
+15: reduce/reduce conflict (reduce 22, reduce 29) on INT
+15: reduce/reduce conflict (reduce 22, reduce 29) on BOOL
+15: reduce/reduce conflict (reduce 22, reduce 29) on ID
+15: reduce/reduce conflict (reduce 22, reduce 29) on IN
+15: reduce/reduce conflict (reduce 22, reduce 29) on PLUS
+15: reduce/reduce conflict (reduce 22, reduce 29) on MINUS
+15: reduce/reduce conflict (reduce 22, reduce 29) on TIMES
+15: reduce/reduce conflict (reduce 22, reduce 29) on DIV
+15: reduce/reduce conflict (reduce 22, reduce 29) on EQ
+15: reduce/reduce conflict (reduce 22, reduce 29) on LT
+15: reduce/reduce conflict (reduce 22, reduce 29) on THEN
+15: reduce/reduce conflict (reduce 22, reduce 29) on ELSE
+15: reduce/reduce conflict (reduce 22, reduce 29) on LPAR
+15: reduce/reduce conflict (reduce 22, reduce 29) on RPAR
+15: reduce/reduce conflict (reduce 22, reduce 29) on WITH
+15: reduce/reduce conflict (reduce 22, reduce 29) on OR
+15: reduce/reduce conflict (reduce 22, reduce 29) on END
+15: reduce/reduce conflict (reduce 22, reduce 29) on SEMI
+15: reduce/reduce conflict (reduce 22, reduce 29) on EOF
+15: reduce/reduce conflict (reduce 22, reduce 29) on COMMA
+15: reduce/reduce conflict (reduce 22, reduce 29) on CONS
+15: reduce/reduce conflict (reduce 22, reduce 29) on LBRACKET
+15: reduce/reduce conflict (reduce 22, reduce 29) on AND
 state 15
-	expr : apply_expr .  (21)
-	noncons_expr : apply_expr .  (28)
+	expr : apply_expr .  (22)
+	noncons_expr : apply_expr .  (29)
+
+	.  reduce 22
+
+
+state 16
+	expr : cons_expr .  (21)
 
 	.  reduce 21
 
 
-state 16
-	expr : cons_expr .  (20)
-
-	.  reduce 20
-
-
 state 17
-	cons_expr : noncons_expr .  (26)
+	cons_expr : noncons_expr .  (27)
 
-	.  reduce 26
+	.  reduce 27
 
 
 state 18
 	command : LET . var var_expr SEMI  (3)
 	command : LET . REC var var var_expr SEMI  (4)
-	expr : LET . var var_expr IN expr  (5)
-	expr : LET . REC var var var_expr IN expr  (6)
-	expr : LET . REC var var var_expr and_expr IN expr  (7)
+	command : LET . REC var var var_expr and_expr SEMI  (5)
+	expr : LET . var var_expr IN expr  (6)
+	expr : LET . REC var var var_expr IN expr  (7)
+	expr : LET . REC var var EQ expr and_expr IN expr  (8)
 
 	ID  shift 21
 	REC  shift 39
@@ -322,22 +325,22 @@ state 18
 
 
 state 19
-	%entry% : '\002' command .  (49)
+	%entry% : '\002' command .  (51)
 
-	.  reduce 49
+	.  reduce 51
 
 
 state 20
 	command : expr . SEMI  (2)
-	expr : expr . EQ expr  (9)
-	expr : expr . LT expr  (10)
-	expr : expr . PLUS expr  (11)
-	expr : expr . MINUS expr  (12)
-	expr : expr . TIMES expr  (13)
-	expr : expr . DIV expr  (14)
-	expr : expr . apply_expr  (17)
-	expr : expr . CONS expr  (19)
-	cons_expr : expr . CONS cons_expr  (27)
+	expr : expr . EQ expr  (10)
+	expr : expr . LT expr  (11)
+	expr : expr . PLUS expr  (12)
+	expr : expr . MINUS expr  (13)
+	expr : expr . TIMES expr  (14)
+	expr : expr . DIV expr  (15)
+	expr : expr . apply_expr  (18)
+	expr : expr . CONS expr  (20)
+	cons_expr : expr . CONS cons_expr  (28)
 
 	INT  shift 4
 	BOOL  shift 5
@@ -358,14 +361,14 @@ state 20
 
 
 state 21
-	var : ID .  (47)
+	var : ID .  (49)
 
-	.  reduce 47
+	.  reduce 49
 
 
 state 22
-	expr : LET REC . var var var_expr IN expr  (6)
-	expr : LET REC . var var var_expr and_expr IN expr  (7)
+	expr : LET REC . var var var_expr IN expr  (7)
+	expr : LET REC . var var EQ expr and_expr IN expr  (8)
 
 	ID  shift 21
 	.  error
@@ -374,7 +377,7 @@ state 22
 
 
 state 23
-	expr : LET var . var_expr IN expr  (5)
+	expr : LET var . var_expr IN expr  (6)
 
 	ID  shift 21
 	EQ  shift 43
@@ -385,16 +388,16 @@ state 23
 
 
 state 24
-	expr : IF expr . THEN expr ELSE expr  (8)
-	expr : expr . EQ expr  (9)
-	expr : expr . LT expr  (10)
-	expr : expr . PLUS expr  (11)
-	expr : expr . MINUS expr  (12)
-	expr : expr . TIMES expr  (13)
-	expr : expr . DIV expr  (14)
-	expr : expr . apply_expr  (17)
-	expr : expr . CONS expr  (19)
-	cons_expr : expr . CONS cons_expr  (27)
+	expr : IF expr . THEN expr ELSE expr  (9)
+	expr : expr . EQ expr  (10)
+	expr : expr . LT expr  (11)
+	expr : expr . PLUS expr  (12)
+	expr : expr . MINUS expr  (13)
+	expr : expr . TIMES expr  (14)
+	expr : expr . DIV expr  (15)
+	expr : expr . apply_expr  (18)
+	expr : expr . CONS expr  (20)
+	cons_expr : expr . CONS cons_expr  (28)
 
 	INT  shift 4
 	BOOL  shift 5
@@ -415,17 +418,17 @@ state 24
 
 
 state 25
-	expr : expr . EQ expr  (9)
-	expr : expr . LT expr  (10)
-	expr : expr . PLUS expr  (11)
-	expr : expr . MINUS expr  (12)
-	expr : expr . TIMES expr  (13)
-	expr : expr . DIV expr  (14)
-	expr : expr . apply_expr  (17)
-	expr : expr . CONS expr  (19)
-	cons_expr : expr . CONS cons_expr  (27)
-	noncons_expr : LPAR expr . COMMA expr_list RPAR  (29)
-	apply_expr : LPAR expr . RPAR  (45)
+	expr : expr . EQ expr  (10)
+	expr : expr . LT expr  (11)
+	expr : expr . PLUS expr  (12)
+	expr : expr . MINUS expr  (13)
+	expr : expr . TIMES expr  (14)
+	expr : expr . DIV expr  (15)
+	expr : expr . apply_expr  (18)
+	expr : expr . CONS expr  (20)
+	cons_expr : expr . CONS cons_expr  (28)
+	noncons_expr : LPAR expr . COMMA expr_list RPAR  (30)
+	apply_expr : LPAR expr . RPAR  (47)
 
 	INT  shift 4
 	BOOL  shift 5
@@ -447,8 +450,8 @@ state 25
 
 
 state 26
-	expr : FUN var . ARROW expr  (15)
-	expr : FUN var . var ARROW expr  (16)
+	expr : FUN var . ARROW expr  (16)
+	expr : FUN var . var ARROW expr  (17)
 
 	ID  shift 21
 	ARROW  shift 49
@@ -458,16 +461,16 @@ state 26
 
 
 state 27
-	expr : expr . EQ expr  (9)
-	expr : expr . LT expr  (10)
-	expr : expr . PLUS expr  (11)
-	expr : expr . MINUS expr  (12)
-	expr : expr . TIMES expr  (13)
-	expr : expr . DIV expr  (14)
-	expr : expr . apply_expr  (17)
-	expr : MATCH expr . WITH pattern_expr END  (18)
-	expr : expr . CONS expr  (19)
-	cons_expr : expr . CONS cons_expr  (27)
+	expr : expr . EQ expr  (10)
+	expr : expr . LT expr  (11)
+	expr : expr . PLUS expr  (12)
+	expr : expr . MINUS expr  (13)
+	expr : expr . TIMES expr  (14)
+	expr : expr . DIV expr  (15)
+	expr : expr . apply_expr  (18)
+	expr : MATCH expr . WITH pattern_expr END  (19)
+	expr : expr . CONS expr  (20)
+	cons_expr : expr . CONS cons_expr  (28)
 
 	INT  shift 4
 	BOOL  shift 5
@@ -488,13 +491,13 @@ state 27
 
 
 state 28
-	apply_expr : LBRACKET RBRACKET .  (46)
+	apply_expr : LBRACKET RBRACKET .  (48)
 
-	.  reduce 46
+	.  reduce 48
 
 
 state 29
-	expr : expr PLUS . expr  (11)
+	expr : expr PLUS . expr  (12)
 
 	INT  shift 4
 	BOOL  shift 5
@@ -514,7 +517,7 @@ state 29
 
 
 state 30
-	expr : expr MINUS . expr  (12)
+	expr : expr MINUS . expr  (13)
 
 	INT  shift 4
 	BOOL  shift 5
@@ -534,7 +537,7 @@ state 30
 
 
 state 31
-	expr : expr TIMES . expr  (13)
+	expr : expr TIMES . expr  (14)
 
 	INT  shift 4
 	BOOL  shift 5
@@ -554,7 +557,7 @@ state 31
 
 
 state 32
-	expr : expr DIV . expr  (14)
+	expr : expr DIV . expr  (15)
 
 	INT  shift 4
 	BOOL  shift 5
@@ -574,7 +577,7 @@ state 32
 
 
 state 33
-	expr : expr EQ . expr  (9)
+	expr : expr EQ . expr  (10)
 
 	INT  shift 4
 	BOOL  shift 5
@@ -594,7 +597,7 @@ state 33
 
 
 state 34
-	expr : expr LT . expr  (10)
+	expr : expr LT . expr  (11)
 
 	INT  shift 4
 	BOOL  shift 5
@@ -614,7 +617,7 @@ state 34
 
 
 state 35
-	apply_expr : LPAR . expr RPAR  (45)
+	apply_expr : LPAR . expr RPAR  (47)
 
 	INT  shift 4
 	BOOL  shift 5
@@ -640,8 +643,8 @@ state 36
 
 
 state 37
-	expr : expr CONS . expr  (19)
-	cons_expr : expr CONS . cons_expr  (27)
+	expr : expr CONS . expr  (20)
+	cons_expr : expr CONS . cons_expr  (28)
 
 	INT  shift 4
 	BOOL  shift 5
@@ -661,15 +664,16 @@ state 37
 
 
 state 38
-	expr : expr apply_expr .  (17)
+	expr : expr apply_expr .  (18)
 
-	.  reduce 17
+	.  reduce 18
 
 
 state 39
 	command : LET REC . var var var_expr SEMI  (4)
-	expr : LET REC . var var var_expr IN expr  (6)
-	expr : LET REC . var var var_expr and_expr IN expr  (7)
+	command : LET REC . var var var_expr and_expr SEMI  (5)
+	expr : LET REC . var var var_expr IN expr  (7)
+	expr : LET REC . var var EQ expr and_expr IN expr  (8)
 
 	ID  shift 21
 	.  error
@@ -679,7 +683,7 @@ state 39
 
 state 40
 	command : LET var . var_expr SEMI  (3)
-	expr : LET var . var_expr IN expr  (5)
+	expr : LET var . var_expr IN expr  (6)
 
 	ID  shift 21
 	EQ  shift 43
@@ -696,8 +700,8 @@ state 41
 
 
 state 42
-	expr : LET REC var . var var_expr IN expr  (6)
-	expr : LET REC var . var var_expr and_expr IN expr  (7)
+	expr : LET REC var . var var_expr IN expr  (7)
+	expr : LET REC var . var EQ expr and_expr IN expr  (8)
 
 	ID  shift 21
 	.  error
@@ -706,7 +710,7 @@ state 42
 
 
 state 43
-	var_expr : EQ . expr  (22)
+	var_expr : EQ . expr  (23)
 
 	INT  shift 4
 	BOOL  shift 5
@@ -726,7 +730,7 @@ state 43
 
 
 state 44
-	var_expr : var . var_expr  (23)
+	var_expr : var . var_expr  (24)
 
 	ID  shift 21
 	EQ  shift 43
@@ -737,14 +741,14 @@ state 44
 
 
 state 45
-	expr : LET var var_expr . IN expr  (5)
+	expr : LET var var_expr . IN expr  (6)
 
 	IN  shift 66
 	.  error
 
 
 state 46
-	expr : IF expr THEN . expr ELSE expr  (8)
+	expr : IF expr THEN . expr ELSE expr  (9)
 
 	INT  shift 4
 	BOOL  shift 5
@@ -764,13 +768,13 @@ state 46
 
 
 state 47
-	apply_expr : LPAR expr RPAR .  (45)
+	apply_expr : LPAR expr RPAR .  (47)
 
-	.  reduce 45
+	.  reduce 47
 
 
 state 48
-	noncons_expr : LPAR expr COMMA . expr_list RPAR  (29)
+	noncons_expr : LPAR expr COMMA . expr_list RPAR  (30)
 
 	INT  shift 4
 	BOOL  shift 5
@@ -791,7 +795,7 @@ state 48
 
 
 state 49
-	expr : FUN var ARROW . expr  (15)
+	expr : FUN var ARROW . expr  (16)
 
 	INT  shift 4
 	BOOL  shift 5
@@ -811,76 +815,38 @@ state 49
 
 
 state 50
-	expr : FUN var var . ARROW expr  (16)
+	expr : FUN var var . ARROW expr  (17)
 
 	ARROW  shift 71
 	.  error
 
 
 state 51
-	expr : MATCH expr WITH . pattern_expr END  (18)
+	expr : MATCH expr WITH . pattern_expr END  (19)
+	pattern_expr : .  (33)
 
 	INT  shift 72
 	BOOL  shift 73
 	ID  shift 74
 	LPAR  shift 75
 	LBRACKET  shift 76
-	.  error
+	END  reduce 33
 
 	pattern_expr  goto 77
 	pattern  goto 78
 
 
 state 52
-	expr : expr . EQ expr  (9)
-	expr : expr . LT expr  (10)
-	expr : expr . PLUS expr  (11)
-	expr : expr PLUS expr .  (11)
-	expr : expr . MINUS expr  (12)
-	expr : expr . TIMES expr  (13)
-	expr : expr . DIV expr  (14)
-	expr : expr . apply_expr  (17)
-	expr : expr . CONS expr  (19)
-	cons_expr : expr . CONS cons_expr  (27)
-
-	INT  shift 4
-	BOOL  shift 5
-	ID  shift 6
-	TIMES  shift 31
-	DIV  shift 32
-	LPAR  shift 35
-	LBRACKET  shift 12
-	IN  reduce 11
-	PLUS  reduce 11
-	MINUS  reduce 11
-	EQ  reduce 11
-	LT  reduce 11
-	THEN  reduce 11
-	ELSE  reduce 11
-	RPAR  reduce 11
-	WITH  reduce 11
-	OR  reduce 11
-	END  reduce 11
-	SEMI  reduce 11
-	EOF  reduce 11
-	COMMA  reduce 11
-	CONS  reduce 11
-	AND  reduce 11
-
-	apply_expr  goto 38
-
-
-state 53
-	expr : expr . EQ expr  (9)
-	expr : expr . LT expr  (10)
-	expr : expr . PLUS expr  (11)
-	expr : expr . MINUS expr  (12)
-	expr : expr MINUS expr .  (12)
-	expr : expr . TIMES expr  (13)
-	expr : expr . DIV expr  (14)
-	expr : expr . apply_expr  (17)
-	expr : expr . CONS expr  (19)
-	cons_expr : expr . CONS cons_expr  (27)
+	expr : expr . EQ expr  (10)
+	expr : expr . LT expr  (11)
+	expr : expr . PLUS expr  (12)
+	expr : expr PLUS expr .  (12)
+	expr : expr . MINUS expr  (13)
+	expr : expr . TIMES expr  (14)
+	expr : expr . DIV expr  (15)
+	expr : expr . apply_expr  (18)
+	expr : expr . CONS expr  (20)
+	cons_expr : expr . CONS cons_expr  (28)
 
 	INT  shift 4
 	BOOL  shift 5
@@ -909,28 +875,28 @@ state 53
 	apply_expr  goto 38
 
 
-state 54
-	expr : expr . EQ expr  (9)
-	expr : expr . LT expr  (10)
-	expr : expr . PLUS expr  (11)
-	expr : expr . MINUS expr  (12)
-	expr : expr . TIMES expr  (13)
-	expr : expr TIMES expr .  (13)
-	expr : expr . DIV expr  (14)
-	expr : expr . apply_expr  (17)
-	expr : expr . CONS expr  (19)
-	cons_expr : expr . CONS cons_expr  (27)
+state 53
+	expr : expr . EQ expr  (10)
+	expr : expr . LT expr  (11)
+	expr : expr . PLUS expr  (12)
+	expr : expr . MINUS expr  (13)
+	expr : expr MINUS expr .  (13)
+	expr : expr . TIMES expr  (14)
+	expr : expr . DIV expr  (15)
+	expr : expr . apply_expr  (18)
+	expr : expr . CONS expr  (20)
+	cons_expr : expr . CONS cons_expr  (28)
 
 	INT  shift 4
 	BOOL  shift 5
 	ID  shift 6
+	TIMES  shift 31
+	DIV  shift 32
 	LPAR  shift 35
 	LBRACKET  shift 12
 	IN  reduce 13
 	PLUS  reduce 13
 	MINUS  reduce 13
-	TIMES  reduce 13
-	DIV  reduce 13
 	EQ  reduce 13
 	LT  reduce 13
 	THEN  reduce 13
@@ -948,17 +914,17 @@ state 54
 	apply_expr  goto 38
 
 
-state 55
-	expr : expr . EQ expr  (9)
-	expr : expr . LT expr  (10)
-	expr : expr . PLUS expr  (11)
-	expr : expr . MINUS expr  (12)
-	expr : expr . TIMES expr  (13)
-	expr : expr . DIV expr  (14)
-	expr : expr DIV expr .  (14)
-	expr : expr . apply_expr  (17)
-	expr : expr . CONS expr  (19)
-	cons_expr : expr . CONS cons_expr  (27)
+state 54
+	expr : expr . EQ expr  (10)
+	expr : expr . LT expr  (11)
+	expr : expr . PLUS expr  (12)
+	expr : expr . MINUS expr  (13)
+	expr : expr . TIMES expr  (14)
+	expr : expr TIMES expr .  (14)
+	expr : expr . DIV expr  (15)
+	expr : expr . apply_expr  (18)
+	expr : expr . CONS expr  (20)
+	cons_expr : expr . CONS cons_expr  (28)
 
 	INT  shift 4
 	BOOL  shift 5
@@ -987,56 +953,56 @@ state 55
 	apply_expr  goto 38
 
 
-state 56
-	expr : expr . EQ expr  (9)
-	expr : expr EQ expr .  (9)
-	expr : expr . LT expr  (10)
-	expr : expr . PLUS expr  (11)
-	expr : expr . MINUS expr  (12)
-	expr : expr . TIMES expr  (13)
-	expr : expr . DIV expr  (14)
-	expr : expr . apply_expr  (17)
-	expr : expr . CONS expr  (19)
-	cons_expr : expr . CONS cons_expr  (27)
+state 55
+	expr : expr . EQ expr  (10)
+	expr : expr . LT expr  (11)
+	expr : expr . PLUS expr  (12)
+	expr : expr . MINUS expr  (13)
+	expr : expr . TIMES expr  (14)
+	expr : expr . DIV expr  (15)
+	expr : expr DIV expr .  (15)
+	expr : expr . apply_expr  (18)
+	expr : expr . CONS expr  (20)
+	cons_expr : expr . CONS cons_expr  (28)
 
 	INT  shift 4
 	BOOL  shift 5
 	ID  shift 6
-	PLUS  shift 29
-	MINUS  shift 30
-	TIMES  shift 31
-	DIV  shift 32
 	LPAR  shift 35
-	CONS  shift 37
 	LBRACKET  shift 12
-	IN  reduce 9
-	EQ  reduce 9
-	LT  reduce 9
-	THEN  reduce 9
-	ELSE  reduce 9
-	RPAR  reduce 9
-	WITH  reduce 9
-	OR  reduce 9
-	END  reduce 9
-	SEMI  reduce 9
-	EOF  reduce 9
-	COMMA  reduce 9
-	AND  reduce 9
+	IN  reduce 15
+	PLUS  reduce 15
+	MINUS  reduce 15
+	TIMES  reduce 15
+	DIV  reduce 15
+	EQ  reduce 15
+	LT  reduce 15
+	THEN  reduce 15
+	ELSE  reduce 15
+	RPAR  reduce 15
+	WITH  reduce 15
+	OR  reduce 15
+	END  reduce 15
+	SEMI  reduce 15
+	EOF  reduce 15
+	COMMA  reduce 15
+	CONS  reduce 15
+	AND  reduce 15
 
 	apply_expr  goto 38
 
 
-state 57
-	expr : expr . EQ expr  (9)
-	expr : expr . LT expr  (10)
-	expr : expr LT expr .  (10)
-	expr : expr . PLUS expr  (11)
-	expr : expr . MINUS expr  (12)
-	expr : expr . TIMES expr  (13)
-	expr : expr . DIV expr  (14)
-	expr : expr . apply_expr  (17)
-	expr : expr . CONS expr  (19)
-	cons_expr : expr . CONS cons_expr  (27)
+state 56
+	expr : expr . EQ expr  (10)
+	expr : expr EQ expr .  (10)
+	expr : expr . LT expr  (11)
+	expr : expr . PLUS expr  (12)
+	expr : expr . MINUS expr  (13)
+	expr : expr . TIMES expr  (14)
+	expr : expr . DIV expr  (15)
+	expr : expr . apply_expr  (18)
+	expr : expr . CONS expr  (20)
+	cons_expr : expr . CONS cons_expr  (28)
 
 	INT  shift 4
 	BOOL  shift 5
@@ -1065,17 +1031,56 @@ state 57
 	apply_expr  goto 38
 
 
+state 57
+	expr : expr . EQ expr  (10)
+	expr : expr . LT expr  (11)
+	expr : expr LT expr .  (11)
+	expr : expr . PLUS expr  (12)
+	expr : expr . MINUS expr  (13)
+	expr : expr . TIMES expr  (14)
+	expr : expr . DIV expr  (15)
+	expr : expr . apply_expr  (18)
+	expr : expr . CONS expr  (20)
+	cons_expr : expr . CONS cons_expr  (28)
+
+	INT  shift 4
+	BOOL  shift 5
+	ID  shift 6
+	PLUS  shift 29
+	MINUS  shift 30
+	TIMES  shift 31
+	DIV  shift 32
+	LPAR  shift 35
+	CONS  shift 37
+	LBRACKET  shift 12
+	IN  reduce 11
+	EQ  reduce 11
+	LT  reduce 11
+	THEN  reduce 11
+	ELSE  reduce 11
+	RPAR  reduce 11
+	WITH  reduce 11
+	OR  reduce 11
+	END  reduce 11
+	SEMI  reduce 11
+	EOF  reduce 11
+	COMMA  reduce 11
+	AND  reduce 11
+
+	apply_expr  goto 38
+
+
 state 58
-	expr : expr . EQ expr  (9)
-	expr : expr . LT expr  (10)
-	expr : expr . PLUS expr  (11)
-	expr : expr . MINUS expr  (12)
-	expr : expr . TIMES expr  (13)
-	expr : expr . DIV expr  (14)
-	expr : expr . apply_expr  (17)
-	expr : expr . CONS expr  (19)
-	cons_expr : expr . CONS cons_expr  (27)
-	apply_expr : LPAR expr . RPAR  (45)
+	expr : expr . EQ expr  (10)
+	expr : expr . LT expr  (11)
+	expr : expr . PLUS expr  (12)
+	expr : expr . MINUS expr  (13)
+	expr : expr . TIMES expr  (14)
+	expr : expr . DIV expr  (15)
+	expr : expr . apply_expr  (18)
+	expr : expr . CONS expr  (20)
+	cons_expr : expr . CONS cons_expr  (28)
+	apply_expr : LPAR expr . RPAR  (47)
 
 	INT  shift 4
 	BOOL  shift 5
@@ -1096,16 +1101,16 @@ state 58
 
 
 state 59
-	expr : expr . EQ expr  (9)
-	expr : expr . LT expr  (10)
-	expr : expr . PLUS expr  (11)
-	expr : expr . MINUS expr  (12)
-	expr : expr . TIMES expr  (13)
-	expr : expr . DIV expr  (14)
-	expr : expr . apply_expr  (17)
-	expr : expr . CONS expr  (19)
-	expr : expr CONS expr .  (19)
-	cons_expr : expr . CONS cons_expr  (27)
+	expr : expr . EQ expr  (10)
+	expr : expr . LT expr  (11)
+	expr : expr . PLUS expr  (12)
+	expr : expr . MINUS expr  (13)
+	expr : expr . TIMES expr  (14)
+	expr : expr . DIV expr  (15)
+	expr : expr . apply_expr  (18)
+	expr : expr . CONS expr  (20)
+	expr : expr CONS expr .  (20)
+	cons_expr : expr . CONS cons_expr  (28)
 
 	INT  shift 4
 	BOOL  shift 5
@@ -1117,57 +1122,58 @@ state 59
 	LPAR  shift 35
 	CONS  shift 37
 	LBRACKET  shift 12
-	IN  reduce 19
-	EQ  reduce 19
-	LT  reduce 19
-	THEN  reduce 19
-	ELSE  reduce 19
-	RPAR  reduce 19
-	WITH  reduce 19
-	OR  reduce 19
-	END  reduce 19
-	SEMI  reduce 19
-	EOF  reduce 19
-	COMMA  reduce 19
-	AND  reduce 19
+	IN  reduce 20
+	EQ  reduce 20
+	LT  reduce 20
+	THEN  reduce 20
+	ELSE  reduce 20
+	RPAR  reduce 20
+	WITH  reduce 20
+	OR  reduce 20
+	END  reduce 20
+	SEMI  reduce 20
+	EOF  reduce 20
+	COMMA  reduce 20
+	AND  reduce 20
 
 	apply_expr  goto 38
 
 
-60: reduce/reduce conflict (reduce 20, reduce 27) on INT
-60: reduce/reduce conflict (reduce 20, reduce 27) on BOOL
-60: reduce/reduce conflict (reduce 20, reduce 27) on ID
-60: reduce/reduce conflict (reduce 20, reduce 27) on IN
-60: reduce/reduce conflict (reduce 20, reduce 27) on PLUS
-60: reduce/reduce conflict (reduce 20, reduce 27) on MINUS
-60: reduce/reduce conflict (reduce 20, reduce 27) on TIMES
-60: reduce/reduce conflict (reduce 20, reduce 27) on DIV
-60: reduce/reduce conflict (reduce 20, reduce 27) on EQ
-60: reduce/reduce conflict (reduce 20, reduce 27) on LT
-60: reduce/reduce conflict (reduce 20, reduce 27) on THEN
-60: reduce/reduce conflict (reduce 20, reduce 27) on ELSE
-60: reduce/reduce conflict (reduce 20, reduce 27) on LPAR
-60: reduce/reduce conflict (reduce 20, reduce 27) on RPAR
-60: reduce/reduce conflict (reduce 20, reduce 27) on WITH
-60: reduce/reduce conflict (reduce 20, reduce 27) on OR
-60: reduce/reduce conflict (reduce 20, reduce 27) on END
-60: reduce/reduce conflict (reduce 20, reduce 27) on SEMI
-60: reduce/reduce conflict (reduce 20, reduce 27) on EOF
-60: reduce/reduce conflict (reduce 20, reduce 27) on COMMA
-60: reduce/reduce conflict (reduce 20, reduce 27) on CONS
-60: reduce/reduce conflict (reduce 20, reduce 27) on LBRACKET
-60: reduce/reduce conflict (reduce 20, reduce 27) on AND
+60: reduce/reduce conflict (reduce 21, reduce 28) on INT
+60: reduce/reduce conflict (reduce 21, reduce 28) on BOOL
+60: reduce/reduce conflict (reduce 21, reduce 28) on ID
+60: reduce/reduce conflict (reduce 21, reduce 28) on IN
+60: reduce/reduce conflict (reduce 21, reduce 28) on PLUS
+60: reduce/reduce conflict (reduce 21, reduce 28) on MINUS
+60: reduce/reduce conflict (reduce 21, reduce 28) on TIMES
+60: reduce/reduce conflict (reduce 21, reduce 28) on DIV
+60: reduce/reduce conflict (reduce 21, reduce 28) on EQ
+60: reduce/reduce conflict (reduce 21, reduce 28) on LT
+60: reduce/reduce conflict (reduce 21, reduce 28) on THEN
+60: reduce/reduce conflict (reduce 21, reduce 28) on ELSE
+60: reduce/reduce conflict (reduce 21, reduce 28) on LPAR
+60: reduce/reduce conflict (reduce 21, reduce 28) on RPAR
+60: reduce/reduce conflict (reduce 21, reduce 28) on WITH
+60: reduce/reduce conflict (reduce 21, reduce 28) on OR
+60: reduce/reduce conflict (reduce 21, reduce 28) on END
+60: reduce/reduce conflict (reduce 21, reduce 28) on SEMI
+60: reduce/reduce conflict (reduce 21, reduce 28) on EOF
+60: reduce/reduce conflict (reduce 21, reduce 28) on COMMA
+60: reduce/reduce conflict (reduce 21, reduce 28) on CONS
+60: reduce/reduce conflict (reduce 21, reduce 28) on LBRACKET
+60: reduce/reduce conflict (reduce 21, reduce 28) on AND
 state 60
-	expr : cons_expr .  (20)
-	cons_expr : expr CONS cons_expr .  (27)
+	expr : cons_expr .  (21)
+	cons_expr : expr CONS cons_expr .  (28)
 
-	.  reduce 20
+	.  reduce 21
 
 
 state 61
 	command : LET REC var . var var_expr SEMI  (4)
-	expr : LET REC var . var var_expr IN expr  (6)
-	expr : LET REC var . var var_expr and_expr IN expr  (7)
+	command : LET REC var . var var_expr and_expr SEMI  (5)
+	expr : LET REC var . var var_expr IN expr  (7)
+	expr : LET REC var . var EQ expr and_expr IN expr  (8)
 
 	ID  shift 21
 	.  error
@@ -1177,7 +1183,7 @@ state 61
 
 state 62
 	command : LET var var_expr . SEMI  (3)
-	expr : LET var var_expr . IN expr  (5)
+	expr : LET var var_expr . IN expr  (6)
 
 	IN  shift 66
 	SEMI  shift 80
@@ -1185,28 +1191,28 @@ state 62
 
 
 state 63
-	expr : LET REC var var . var_expr IN expr  (6)
-	expr : LET REC var var . var_expr and_expr IN expr  (7)
+	expr : LET REC var var . var_expr IN expr  (7)
+	expr : LET REC var var . EQ expr and_expr IN expr  (8)
 
 	ID  shift 21
-	EQ  shift 43
+	EQ  shift 81
 	.  error
 
 	var  goto 44
-	var_expr  goto 81
+	var_expr  goto 82
 
 
 state 64
-	expr : expr . EQ expr  (9)
-	expr : expr . LT expr  (10)
-	expr : expr . PLUS expr  (11)
-	expr : expr . MINUS expr  (12)
-	expr : expr . TIMES expr  (13)
-	expr : expr . DIV expr  (14)
-	expr : expr . apply_expr  (17)
-	expr : expr . CONS expr  (19)
-	var_expr : EQ expr .  (22)
-	cons_expr : expr . CONS cons_expr  (27)
+	expr : expr . EQ expr  (10)
+	expr : expr . LT expr  (11)
+	expr : expr . PLUS expr  (12)
+	expr : expr . MINUS expr  (13)
+	expr : expr . TIMES expr  (14)
+	expr : expr . DIV expr  (15)
+	expr : expr . apply_expr  (18)
+	expr : expr . CONS expr  (20)
+	var_expr : EQ expr .  (23)
+	cons_expr : expr . CONS cons_expr  (28)
 
 	INT  shift 4
 	BOOL  shift 5
@@ -1220,21 +1226,21 @@ state 64
 	LPAR  shift 35
 	CONS  shift 37
 	LBRACKET  shift 12
-	IN  reduce 22
-	SEMI  reduce 22
-	AND  reduce 22
+	IN  reduce 23
+	SEMI  reduce 23
+	AND  reduce 23
 
 	apply_expr  goto 38
 
 
 state 65
-	var_expr : var var_expr .  (23)
+	var_expr : var var_expr .  (24)
 
-	.  reduce 23
+	.  reduce 24
 
 
 state 66
-	expr : LET var var_expr IN . expr  (5)
+	expr : LET var var_expr IN . expr  (6)
 
 	INT  shift 4
 	BOOL  shift 5
@@ -1247,23 +1253,23 @@ state 66
 	LBRACKET  shift 12
 	.  error
 
-	expr  goto 82
+	expr  goto 83
 	apply_expr  goto 15
 	cons_expr  goto 16
 	noncons_expr  goto 17
 
 
 state 67
-	expr : IF expr THEN expr . ELSE expr  (8)
-	expr : expr . EQ expr  (9)
-	expr : expr . LT expr  (10)
-	expr : expr . PLUS expr  (11)
-	expr : expr . MINUS expr  (12)
-	expr : expr . TIMES expr  (13)
-	expr : expr . DIV expr  (14)
-	expr : expr . apply_expr  (17)
-	expr : expr . CONS expr  (19)
-	cons_expr : expr . CONS cons_expr  (27)
+	expr : IF expr THEN expr . ELSE expr  (9)
+	expr : expr . EQ expr  (10)
+	expr : expr . LT expr  (11)
+	expr : expr . PLUS expr  (12)
+	expr : expr . MINUS expr  (13)
+	expr : expr . TIMES expr  (14)
+	expr : expr . DIV expr  (15)
+	expr : expr . apply_expr  (18)
+	expr : expr . CONS expr  (20)
+	cons_expr : expr . CONS cons_expr  (28)
 
 	INT  shift 4
 	BOOL  shift 5
@@ -1274,7 +1280,7 @@ state 67
 	DIV  shift 32
 	EQ  shift 33
 	LT  shift 34
-	ELSE  shift 83
+	ELSE  shift 84
 	LPAR  shift 35
 	CONS  shift 37
 	LBRACKET  shift 12
@@ -1284,17 +1290,17 @@ state 67
 
 
 state 68
-	expr : expr . EQ expr  (9)
-	expr : expr . LT expr  (10)
-	expr : expr . PLUS expr  (11)
-	expr : expr . MINUS expr  (12)
-	expr : expr . TIMES expr  (13)
-	expr : expr . DIV expr  (14)
-	expr : expr . apply_expr  (17)
-	expr : expr . CONS expr  (19)
-	cons_expr : expr . CONS cons_expr  (27)
-	expr_list : expr .  (30)
-	expr_list : expr . COMMA expr_list  (31)
+	expr : expr . EQ expr  (10)
+	expr : expr . LT expr  (11)
+	expr : expr . PLUS expr  (12)
+	expr : expr . MINUS expr  (13)
+	expr : expr . TIMES expr  (14)
+	expr : expr . DIV expr  (15)
+	expr : expr . apply_expr  (18)
+	expr : expr . CONS expr  (20)
+	cons_expr : expr . CONS cons_expr  (28)
+	expr_list : expr .  (31)
+	expr_list : expr . COMMA expr_list  (32)
 
 	INT  shift 4
 	BOOL  shift 5
@@ -1306,263 +1312,32 @@ state 68
 	EQ  shift 33
 	LT  shift 34
 	LPAR  shift 35
-	COMMA  shift 84
+	COMMA  shift 85
 	CONS  shift 37
 	LBRACKET  shift 12
-	RPAR  reduce 30
+	RPAR  reduce 31
 
 	apply_expr  goto 38
 
 
 state 69
-	noncons_expr : LPAR expr COMMA expr_list . RPAR  (29)
+	noncons_expr : LPAR expr COMMA expr_list . RPAR  (30)
 
-	RPAR  shift 85
+	RPAR  shift 86
 	.  error
 
 
 state 70
-	expr : expr . EQ expr  (9)
-	expr : expr . LT expr  (10)
-	expr : expr . PLUS expr  (11)
-	expr : expr . MINUS expr  (12)
-	expr : expr . TIMES expr  (13)
-	expr : expr . DIV expr  (14)
-	expr : FUN var ARROW expr .  (15)
-	expr : expr . apply_expr  (17)
-	expr : expr . CONS expr  (19)
-	cons_expr : expr . CONS cons_expr  (27)
-
-	INT  shift 4
-	BOOL  shift 5
-	ID  shift 6
-	PLUS  shift 29
-	MINUS  shift 30
-	TIMES  shift 31
-	DIV  shift 32
-	EQ  shift 33
-	LT  shift 34
-	LPAR  shift 35
-	CONS  shift 37
-	LBRACKET  shift 12
-	IN  reduce 15
-	THEN  reduce 15
-	ELSE  reduce 15
-	RPAR  reduce 15
-	WITH  reduce 15
-	OR  reduce 15
-	END  reduce 15
-	SEMI  reduce 15
-	EOF  reduce 15
-	COMMA  reduce 15
-	AND  reduce 15
-
-	apply_expr  goto 38
-
-
-state 71
-	expr : FUN var var ARROW . expr  (16)
-
-	INT  shift 4
-	BOOL  shift 5
-	ID  shift 6
-	LET  shift 7
-	IF  shift 8
-	LPAR  shift 9
-	FUN  shift 10
-	MATCH  shift 11
-	LBRACKET  shift 12
-	.  error
-
-	expr  goto 86
-	apply_expr  goto 15
-	cons_expr  goto 16
-	noncons_expr  goto 17
-
-
-state 72
-	pattern : INT .  (34)
-
-	.  reduce 34
-
-
-state 73
-	pattern : BOOL .  (35)
-
-	.  reduce 35
-
-
-state 74
-	pattern : ID .  (36)
-
-	.  reduce 36
-
-
-state 75
-	pattern : LPAR . pattern COMMA pattern_list RPAR  (38)
-
-	INT  shift 72
-	BOOL  shift 73
-	ID  shift 74
-	LPAR  shift 75
-	LBRACKET  shift 76
-	.  error
-
-	pattern  goto 87
-
-
-state 76
-	pattern : LBRACKET . RBRACKET  (37)
-
-	RBRACKET  shift 88
-	.  error
-
-
-state 77
-	expr : MATCH expr WITH pattern_expr . END  (18)
-
-	END  shift 89
-	.  error
-
-
-state 78
-	pattern_expr : pattern . ARROW expr  (32)
-	pattern_expr : pattern . ARROW expr OR pattern_expr  (33)
-	pattern : pattern . CONS pattern  (39)
-
-	ARROW  shift 90
-	CONS  shift 91
-	.  error
-
-
-state 79
-	command : LET REC var var . var_expr SEMI  (4)
-	expr : LET REC var var . var_expr IN expr  (6)
-	expr : LET REC var var . var_expr and_expr IN expr  (7)
-
-	ID  shift 21
-	EQ  shift 43
-	.  error
-
-	var  goto 44
-	var_expr  goto 92
-
-
-state 80
-	command : LET var var_expr SEMI .  (3)
-
-	.  reduce 3
-
-
-81: shift/reduce conflict (shift 93, reduce 25) on IN
-state 81
-	expr : LET REC var var var_expr . IN expr  (6)
-	expr : LET REC var var var_expr . and_expr IN expr  (7)
-	and_expr : .  (25)
-
-	IN  shift 93
-	AND  shift 94
-
-	and_expr  goto 95
-
-
-state 82
-	expr : LET var var_expr IN expr .  (5)
-	expr : expr . EQ expr  (9)
-	expr : expr . LT expr  (10)
-	expr : expr . PLUS expr  (11)
-	expr : expr . MINUS expr  (12)
-	expr : expr . TIMES expr  (13)
-	expr : expr . DIV expr  (14)
-	expr : expr . apply_expr  (17)
-	expr : expr . CONS expr  (19)
-	cons_expr : expr . CONS cons_expr  (27)
-
-	INT  shift 4
-	BOOL  shift 5
-	ID  shift 6
-	PLUS  shift 29
-	MINUS  shift 30
-	TIMES  shift 31
-	DIV  shift 32
-	EQ  shift 33
-	LT  shift 34
-	LPAR  shift 35
-	CONS  shift 37
-	LBRACKET  shift 12
-	IN  reduce 5
-	THEN  reduce 5
-	ELSE  reduce 5
-	RPAR  reduce 5
-	WITH  reduce 5
-	OR  reduce 5
-	END  reduce 5
-	SEMI  reduce 5
-	EOF  reduce 5
-	COMMA  reduce 5
-	AND  reduce 5
-
-	apply_expr  goto 38
-
-
-state 83
-	expr : IF expr THEN expr ELSE . expr  (8)
-
-	INT  shift 4
-	BOOL  shift 5
-	ID  shift 6
-	LET  shift 7
-	IF  shift 8
-	LPAR  shift 9
-	FUN  shift 10
-	MATCH  shift 11
-	LBRACKET  shift 12
-	.  error
-
-	expr  goto 96
-	apply_expr  goto 15
-	cons_expr  goto 16
-	noncons_expr  goto 17
-
-
-state 84
-	expr_list : expr COMMA . expr_list  (31)
-
-	INT  shift 4
-	BOOL  shift 5
-	ID  shift 6
-	LET  shift 7
-	IF  shift 8
-	LPAR  shift 9
-	FUN  shift 10
-	MATCH  shift 11
-	LBRACKET  shift 12
-	.  error
-
-	expr  goto 68
-	apply_expr  goto 15
-	cons_expr  goto 16
-	noncons_expr  goto 17
-	expr_list  goto 97
-
-
-state 85
-	noncons_expr : LPAR expr COMMA expr_list RPAR .  (29)
-
-	.  reduce 29
-
-
-state 86
-	expr : expr . EQ expr  (9)
-	expr : expr . LT expr  (10)
-	expr : expr . PLUS expr  (11)
-	expr : expr . MINUS expr  (12)
-	expr : expr . TIMES expr  (13)
-	expr : expr . DIV expr  (14)
-	expr : FUN var var ARROW expr .  (16)
-	expr : expr . apply_expr  (17)
-	expr : expr . CONS expr  (19)
-	cons_expr : expr . CONS cons_expr  (27)
+	expr : expr . EQ expr  (10)
+	expr : expr . LT expr  (11)
+	expr : expr . PLUS expr  (12)
+	expr : expr . MINUS expr  (13)
+	expr : expr . TIMES expr  (14)
+	expr : expr . DIV expr  (15)
+	expr : FUN var ARROW expr .  (16)
+	expr : expr . apply_expr  (18)
+	expr : expr . CONS expr  (20)
+	cons_expr : expr . CONS cons_expr  (28)
 
 	INT  shift 4
 	BOOL  shift 5
@@ -1591,50 +1366,46 @@ state 86
 	apply_expr  goto 38
 
 
-state 87
-	pattern : LPAR pattern . COMMA pattern_list RPAR  (38)
-	pattern : pattern . CONS pattern  (39)
+state 71
+	expr : FUN var var ARROW . expr  (17)
 
-	COMMA  shift 98
-	CONS  shift 91
+	INT  shift 4
+	BOOL  shift 5
+	ID  shift 6
+	LET  shift 7
+	IF  shift 8
+	LPAR  shift 9
+	FUN  shift 10
+	MATCH  shift 11
+	LBRACKET  shift 12
 	.  error
 
+	expr  goto 87
+	apply_expr  goto 15
+	cons_expr  goto 16
+	noncons_expr  goto 17
 
-state 88
-	pattern : LBRACKET RBRACKET .  (37)
+
+state 72
+	pattern : INT .  (36)
+
+	.  reduce 36
+
+
+state 73
+	pattern : BOOL .  (37)
 
 	.  reduce 37
 
 
-state 89
-	expr : MATCH expr WITH pattern_expr END .  (18)
+state 74
+	pattern : ID .  (38)
 
-	.  reduce 18
-
-
-state 90
-	pattern_expr : pattern ARROW . expr  (32)
-	pattern_expr : pattern ARROW . expr OR pattern_expr  (33)
-
-	INT  shift 4
-	BOOL  shift 5
-	ID  shift 6
-	LET  shift 7
-	IF  shift 8
-	LPAR  shift 9
-	FUN  shift 10
-	MATCH  shift 11
-	LBRACKET  shift 12
-	.  error
-
-	expr  goto 99
-	apply_expr  goto 15
-	cons_expr  goto 16
-	noncons_expr  goto 17
+	.  reduce 38
 
 
-state 91
-	pattern : pattern CONS . pattern  (39)
+state 75
+	pattern : LPAR . pattern COMMA pattern_list RPAR  (40)
 
 	INT  shift 72
 	BOOL  shift 73
@@ -1643,176 +1414,92 @@ state 91
 	LBRACKET  shift 76
 	.  error
 
-	pattern  goto 100
+	pattern  goto 88
 
 
-92: shift/reduce conflict (shift 93, reduce 25) on IN
-state 92
-	command : LET REC var var var_expr . SEMI  (4)
-	expr : LET REC var var var_expr . IN expr  (6)
-	expr : LET REC var var var_expr . and_expr IN expr  (7)
-	and_expr : .  (25)
+state 76
+	pattern : LBRACKET . RBRACKET  (39)
 
-	IN  shift 93
-	SEMI  shift 101
-	AND  shift 94
-
-	and_expr  goto 95
-
-
-state 93
-	expr : LET REC var var var_expr IN . expr  (6)
-
-	INT  shift 4
-	BOOL  shift 5
-	ID  shift 6
-	LET  shift 7
-	IF  shift 8
-	LPAR  shift 9
-	FUN  shift 10
-	MATCH  shift 11
-	LBRACKET  shift 12
+	RBRACKET  shift 89
 	.  error
 
-	expr  goto 102
-	apply_expr  goto 15
-	cons_expr  goto 16
-	noncons_expr  goto 17
+
+state 77
+	expr : MATCH expr WITH pattern_expr . END  (19)
+
+	END  shift 90
+	.  error
 
 
-state 94
-	and_expr : AND . var var EQ expr and_expr  (24)
+state 78
+	pattern_expr : pattern . ARROW expr  (34)
+	pattern_expr : pattern . ARROW expr OR pattern_expr  (35)
+	pattern : pattern . CONS pattern  (41)
+
+	ARROW  shift 91
+	CONS  shift 92
+	.  error
+
+
+state 79
+	command : LET REC var var . var_expr SEMI  (4)
+	command : LET REC var var . var_expr and_expr SEMI  (5)
+	expr : LET REC var var . var_expr IN expr  (7)
+	expr : LET REC var var . EQ expr and_expr IN expr  (8)
 
 	ID  shift 21
+	EQ  shift 81
 	.  error
 
-	var  goto 103
+	var  goto 44
+	var_expr  goto 93
 
 
-state 95
-	expr : LET REC var var var_expr and_expr . IN expr  (7)
+state 80
+	command : LET var var_expr SEMI .  (3)
 
-	IN  shift 104
-	.  error
+	.  reduce 3
 
 
-state 96
-	expr : IF expr THEN expr ELSE expr .  (8)
-	expr : expr . EQ expr  (9)
-	expr : expr . LT expr  (10)
-	expr : expr . PLUS expr  (11)
-	expr : expr . MINUS expr  (12)
-	expr : expr . TIMES expr  (13)
-	expr : expr . DIV expr  (14)
-	expr : expr . apply_expr  (17)
-	expr : expr . CONS expr  (19)
-	cons_expr : expr . CONS cons_expr  (27)
+state 81
+	expr : LET REC var var EQ . expr and_expr IN expr  (8)
+	var_expr : EQ . expr  (23)
 
 	INT  shift 4
 	BOOL  shift 5
 	ID  shift 6
-	PLUS  shift 29
-	MINUS  shift 30
-	TIMES  shift 31
-	DIV  shift 32
-	EQ  shift 33
-	LT  shift 34
-	LPAR  shift 35
-	CONS  shift 37
+	LET  shift 7
+	IF  shift 8
+	LPAR  shift 9
+	FUN  shift 10
+	MATCH  shift 11
 	LBRACKET  shift 12
-	IN  reduce 8
-	THEN  reduce 8
-	ELSE  reduce 8
-	RPAR  reduce 8
-	WITH  reduce 8
-	OR  reduce 8
-	END  reduce 8
-	SEMI  reduce 8
-	EOF  reduce 8
-	COMMA  reduce 8
-	AND  reduce 8
-
-	apply_expr  goto 38
-
-
-state 97
-	expr_list : expr COMMA expr_list .  (31)
-
-	.  reduce 31
-
-
-state 98
-	pattern : LPAR pattern COMMA . pattern_list RPAR  (38)
-
-	INT  shift 72
-	BOOL  shift 73
-	ID  shift 74
-	LPAR  shift 75
-	LBRACKET  shift 76
 	.  error
 
-	pattern  goto 105
-	pattern_list  goto 106
+	expr  goto 94
+	apply_expr  goto 15
+	cons_expr  goto 16
+	noncons_expr  goto 17
 
 
-state 99
-	expr : expr . EQ expr  (9)
-	expr : expr . LT expr  (10)
-	expr : expr . PLUS expr  (11)
-	expr : expr . MINUS expr  (12)
-	expr : expr . TIMES expr  (13)
-	expr : expr . DIV expr  (14)
-	expr : expr . apply_expr  (17)
-	expr : expr . CONS expr  (19)
-	cons_expr : expr . CONS cons_expr  (27)
-	pattern_expr : pattern ARROW expr .  (32)
-	pattern_expr : pattern ARROW expr . OR pattern_expr  (33)
+state 82
+	expr : LET REC var var var_expr . IN expr  (7)
 
-	INT  shift 4
-	BOOL  shift 5
-	ID  shift 6
-	PLUS  shift 29
-	MINUS  shift 30
-	TIMES  shift 31
-	DIV  shift 32
-	EQ  shift 33
-	LT  shift 34
-	LPAR  shift 35
-	OR  shift 107
-	CONS  shift 37
-	LBRACKET  shift 12
-	END  reduce 32
-
-	apply_expr  goto 38
+	IN  shift 95
+	.  error
 
 
-state 100
-	pattern : pattern . CONS pattern  (39)
-	pattern : pattern CONS pattern .  (39)
-
-	CONS  shift 91
-	RPAR  reduce 39
-	ARROW  reduce 39
-	COMMA  reduce 39
-
-
-state 101
-	command : LET REC var var var_expr SEMI .  (4)
-
-	.  reduce 4
-
-
-state 102
-	expr : LET REC var var var_expr IN expr .  (6)
-	expr : expr . EQ expr  (9)
-	expr : expr . LT expr  (10)
-	expr : expr . PLUS expr  (11)
-	expr : expr . MINUS expr  (12)
-	expr : expr . TIMES expr  (13)
-	expr : expr . DIV expr  (14)
-	expr : expr . apply_expr  (17)
-	expr : expr . CONS expr  (19)
-	cons_expr : expr . CONS cons_expr  (27)
+state 83
+	expr : LET var var_expr IN expr .  (6)
+	expr : expr . EQ expr  (10)
+	expr : expr . LT expr  (11)
+	expr : expr . PLUS expr  (12)
+	expr : expr . MINUS expr  (13)
+	expr : expr . TIMES expr  (14)
+	expr : expr . DIV expr  (15)
+	expr : expr . apply_expr  (18)
+	expr : expr . CONS expr  (20)
+	cons_expr : expr . CONS cons_expr  (28)
 
 	INT  shift 4
 	BOOL  shift 5
@@ -1841,17 +1528,8 @@ state 102
 	apply_expr  goto 38
 
 
-state 103
-	and_expr : AND var . var EQ expr and_expr  (24)
-
-	ID  shift 21
-	.  error
-
-	var  goto 108
-
-
-state 104
-	expr : LET REC var var var_expr and_expr IN . expr  (7)
+state 84
+	expr : IF expr THEN expr ELSE . expr  (9)
 
 	INT  shift 4
 	BOOL  shift 5
@@ -1864,31 +1542,122 @@ state 104
 	LBRACKET  shift 12
 	.  error
 
-	expr  goto 109
+	expr  goto 96
 	apply_expr  goto 15
 	cons_expr  goto 16
 	noncons_expr  goto 17
 
 
-state 105
-	pattern : pattern . CONS pattern  (39)
-	pattern_list : pattern .  (40)
-	pattern_list : pattern . COMMA pattern_list  (41)
+state 85
+	expr_list : expr COMMA . expr_list  (32)
 
-	COMMA  shift 110
-	CONS  shift 91
-	RPAR  reduce 40
+	INT  shift 4
+	BOOL  shift 5
+	ID  shift 6
+	LET  shift 7
+	IF  shift 8
+	LPAR  shift 9
+	FUN  shift 10
+	MATCH  shift 11
+	LBRACKET  shift 12
+	.  error
+
+	expr  goto 68
+	apply_expr  goto 15
+	cons_expr  goto 16
+	noncons_expr  goto 17
+	expr_list  goto 97
 
 
-state 106
-	pattern : LPAR pattern COMMA pattern_list . RPAR  (38)
+state 86
+	noncons_expr : LPAR expr COMMA expr_list RPAR .  (30)
 
-	RPAR  shift 111
+	.  reduce 30
+
+
+state 87
+	expr : expr . EQ expr  (10)
+	expr : expr . LT expr  (11)
+	expr : expr . PLUS expr  (12)
+	expr : expr . MINUS expr  (13)
+	expr : expr . TIMES expr  (14)
+	expr : expr . DIV expr  (15)
+	expr : FUN var var ARROW expr .  (17)
+	expr : expr . apply_expr  (18)
+	expr : expr . CONS expr  (20)
+	cons_expr : expr . CONS cons_expr  (28)
+
+	INT  shift 4
+	BOOL  shift 5
+	ID  shift 6
+	PLUS  shift 29
+	MINUS  shift 30
+	TIMES  shift 31
+	DIV  shift 32
+	EQ  shift 33
+	LT  shift 34
+	LPAR  shift 35
+	CONS  shift 37
+	LBRACKET  shift 12
+	IN  reduce 17
+	THEN  reduce 17
+	ELSE  reduce 17
+	RPAR  reduce 17
+	WITH  reduce 17
+	OR  reduce 17
+	END  reduce 17
+	SEMI  reduce 17
+	EOF  reduce 17
+	COMMA  reduce 17
+	AND  reduce 17
+
+	apply_expr  goto 38
+
+
+state 88
+	pattern : LPAR pattern . COMMA pattern_list RPAR  (40)
+	pattern : pattern . CONS pattern  (41)
+
+	COMMA  shift 98
+	CONS  shift 92
 	.  error
 
 
-state 107
-	pattern_expr : pattern ARROW expr OR . pattern_expr  (33)
+state 89
+	pattern : LBRACKET RBRACKET .  (39)
+
+	.  reduce 39
+
+
+state 90
+	expr : MATCH expr WITH pattern_expr END .  (19)
+
+	.  reduce 19
+
+
+state 91
+	pattern_expr : pattern ARROW . expr  (34)
+	pattern_expr : pattern ARROW . expr OR pattern_expr  (35)
+
+	INT  shift 4
+	BOOL  shift 5
+	ID  shift 6
+	LET  shift 7
+	IF  shift 8
+	LPAR  shift 9
+	FUN  shift 10
+	MATCH  shift 11
+	LBRACKET  shift 12
+	.  error
+
+	expr  goto 99
+	apply_expr  goto 15
+	cons_expr  goto 16
+	noncons_expr  goto 17
+
+
+state 92
+	pattern : pattern CONS . pattern  (41)
 
 	INT  shift 72
 	BOOL  shift 73
@@ -1897,28 +1666,218 @@ state 107
 	LBRACKET  shift 76
 	.  error
 
-	pattern_expr  goto 112
-	pattern  goto 78
+	pattern  goto 100
 
 
-state 108
-	and_expr : AND var var . EQ expr and_expr  (24)
+93: shift/reduce conflict (shift 101, reduce 26) on SEMI
+state 93
+	command : LET REC var var var_expr . SEMI  (4)
+	command : LET REC var var var_expr . and_expr SEMI  (5)
+	expr : LET REC var var var_expr . IN expr  (7)
+	and_expr : .  (26)
 
-	EQ  shift 113
+	IN  shift 95
+	SEMI  shift 101
+	AND  shift 102
+
+	and_expr  goto 103
+
+
+94: reduce/reduce conflict (reduce 23, reduce 26) on IN
+state 94
+	expr : LET REC var var EQ expr . and_expr IN expr  (8)
+	expr : expr . EQ expr  (10)
+	expr : expr . LT expr  (11)
+	expr : expr . PLUS expr  (12)
+	expr : expr . MINUS expr  (13)
+	expr : expr . TIMES expr  (14)
+	expr : expr . DIV expr  (15)
+	expr : expr . apply_expr  (18)
+	expr : expr . CONS expr  (20)
+	var_expr : EQ expr .  (23)
+	cons_expr : expr . CONS cons_expr  (28)
+	and_expr : .  (26)
+
+	INT  shift 4
+	BOOL  shift 5
+	ID  shift 6
+	PLUS  shift 29
+	MINUS  shift 30
+	TIMES  shift 31
+	DIV  shift 32
+	EQ  shift 33
+	LT  shift 34
+	LPAR  shift 35
+	CONS  shift 37
+	LBRACKET  shift 12
+	IN  reduce 23
+	SEMI  reduce 23
+	AND  reduce 23
+
+	and_expr  goto 104
+	apply_expr  goto 38
+
+
+state 95
+	expr : LET REC var var var_expr IN . expr  (7)
+
+	INT  shift 4
+	BOOL  shift 5
+	ID  shift 6
+	LET  shift 7
+	IF  shift 8
+	LPAR  shift 9
+	FUN  shift 10
+	MATCH  shift 11
+	LBRACKET  shift 12
+	.  error
+
+	expr  goto 105
+	apply_expr  goto 15
+	cons_expr  goto 16
+	noncons_expr  goto 17
+
+
+state 96
+	expr : IF expr THEN expr ELSE expr .  (9)
+	expr : expr . EQ expr  (10)
+	expr : expr . LT expr  (11)
+	expr : expr . PLUS expr  (12)
+	expr : expr . MINUS expr  (13)
+	expr : expr . TIMES expr  (14)
+	expr : expr . DIV expr  (15)
+	expr : expr . apply_expr  (18)
+	expr : expr . CONS expr  (20)
+	cons_expr : expr . CONS cons_expr  (28)
+
+	INT  shift 4
+	BOOL  shift 5
+	ID  shift 6
+	PLUS  shift 29
+	MINUS  shift 30
+	TIMES  shift 31
+	DIV  shift 32
+	EQ  shift 33
+	LT  shift 34
+	LPAR  shift 35
+	CONS  shift 37
+	LBRACKET  shift 12
+	IN  reduce 9
+	THEN  reduce 9
+	ELSE  reduce 9
+	RPAR  reduce 9
+	WITH  reduce 9
+	OR  reduce 9
+	END  reduce 9
+	SEMI  reduce 9
+	EOF  reduce 9
+	COMMA  reduce 9
+	AND  reduce 9
+
+	apply_expr  goto 38
+
+
+state 97
+	expr_list : expr COMMA expr_list .  (32)
+
+	.  reduce 32
+
+
+state 98
+	pattern : LPAR pattern COMMA . pattern_list RPAR  (40)
+
+	INT  shift 72
+	BOOL  shift 73
+	ID  shift 74
+	LPAR  shift 75
+	LBRACKET  shift 76
+	.  error
+
+	pattern  goto 106
+	pattern_list  goto 107
+
+
+state 99
+	expr : expr . EQ expr  (10)
+	expr : expr . LT expr  (11)
+	expr : expr . PLUS expr  (12)
+	expr : expr . MINUS expr  (13)
+	expr : expr . TIMES expr  (14)
+	expr : expr . DIV expr  (15)
+	expr : expr . apply_expr  (18)
+	expr : expr . CONS expr  (20)
+	cons_expr : expr . CONS cons_expr  (28)
+	pattern_expr : pattern ARROW expr .  (34)
+	pattern_expr : pattern ARROW expr . OR pattern_expr  (35)
+
+	INT  shift 4
+	BOOL  shift 5
+	ID  shift 6
+	PLUS  shift 29
+	MINUS  shift 30
+	TIMES  shift 31
+	DIV  shift 32
+	EQ  shift 33
+	LT  shift 34
+	LPAR  shift 35
+	OR  shift 108
+	CONS  shift 37
+	LBRACKET  shift 12
+	END  reduce 34
+
+	apply_expr  goto 38
+
+
+state 100
+	pattern : pattern . CONS pattern  (41)
+	pattern : pattern CONS pattern .  (41)
+
+	CONS  shift 92
+	RPAR  reduce 41
+	ARROW  reduce 41
+	COMMA  reduce 41
+
+
+state 101
+	command : LET REC var var var_expr SEMI .  (4)
+
+	.  reduce 4
+
+
+state 102
+	and_expr : AND . var var var_expr and_expr  (25)
+
+	ID  shift 21
+	.  error
+
+	var  goto 109
+
+
+state 103
+	command : LET REC var var var_expr and_expr . SEMI  (5)
+
+	SEMI  shift 110
 	.  error
 
 
-state 109
-	expr : LET REC var var var_expr and_expr IN expr .  (7)
-	expr : expr . EQ expr  (9)
-	expr : expr . LT expr  (10)
-	expr : expr . PLUS expr  (11)
-	expr : expr . MINUS expr  (12)
-	expr : expr . TIMES expr  (13)
-	expr : expr . DIV expr  (14)
-	expr : expr . apply_expr  (17)
-	expr : expr . CONS expr  (19)
-	cons_expr : expr . CONS cons_expr  (27)
+state 104
+	expr : LET REC var var EQ expr and_expr . IN expr  (8)
+
+	IN  shift 111
+	.  error
+
+
+state 105
+	expr : LET REC var var var_expr IN expr .  (7)
+	expr : expr . EQ expr  (10)
+	expr : expr . LT expr  (11)
+	expr : expr . PLUS expr  (12)
+	expr : expr . MINUS expr  (13)
+	expr : expr . TIMES expr  (14)
+	expr : expr . DIV expr  (15)
+	expr : expr . apply_expr  (18)
+	expr : expr . CONS expr  (20)
+	cons_expr : expr . CONS cons_expr  (28)
 
 	INT  shift 4
 	BOOL  shift 5
@@ -1947,34 +1906,55 @@ state 109
 	apply_expr  goto 38
 
 
-state 110
-	pattern_list : pattern COMMA . pattern_list  (41)
+state 106
+	pattern : pattern . CONS pattern  (41)
+	pattern_list : pattern .  (42)
+	pattern_list : pattern . COMMA pattern_list  (43)
+
+	COMMA  shift 112
+	CONS  shift 92
+	RPAR  reduce 42
+
+
+state 107
+	pattern : LPAR pattern COMMA pattern_list . RPAR  (40)
+
+	RPAR  shift 113
+	.  error
+
+
+state 108
+	pattern_expr : pattern ARROW expr OR . pattern_expr  (35)
+	pattern_expr : .  (33)
 
 	INT  shift 72
 	BOOL  shift 73
 	ID  shift 74
 	LPAR  shift 75
 	LBRACKET  shift 76
+	END  reduce 33
+
+	pattern_expr  goto 114
+	pattern  goto 78
+
+
+state 109
+	and_expr : AND var . var var_expr and_expr  (25)
+
+	ID  shift 21
 	.  error
 
-	pattern  goto 105
-	pattern_list  goto 114
+	var  goto 115
+
+
+state 110
+	command : LET REC var var var_expr and_expr SEMI .  (5)
+
+	.  reduce 5
 
 
 state 111
-	pattern : LPAR pattern COMMA pattern_list RPAR .  (38)
-
-	.  reduce 38
-
-
-state 112
-	pattern_expr : pattern ARROW expr OR pattern_expr .  (33)
-
-	.  reduce 33
-
-
-state 113
-	and_expr : AND var var EQ . expr and_expr  (24)
+	expr : LET REC var var EQ expr and_expr IN . expr  (8)
 
 	INT  shift 4
 	BOOL  shift 5
@@ -1987,30 +1967,60 @@ state 113
 	LBRACKET  shift 12
 	.  error
 
-	expr  goto 115
+	expr  goto 116
 	apply_expr  goto 15
 	cons_expr  goto 16
 	noncons_expr  goto 17
 
 
-state 114
-	pattern_list : pattern COMMA pattern_list .  (41)
+state 112
+	pattern_list : pattern COMMA . pattern_list  (43)
 
-	.  reduce 41
+	INT  shift 72
+	BOOL  shift 73
+	ID  shift 74
+	LPAR  shift 75
+	LBRACKET  shift 76
+	.  error
+
+	pattern  goto 106
+	pattern_list  goto 117
+
+
+state 113
+	pattern : LPAR pattern COMMA pattern_list RPAR .  (40)
+
+	.  reduce 40
+
+
+state 114
+	pattern_expr : pattern ARROW expr OR pattern_expr .  (35)
+
+	.  reduce 35
 
 
 state 115
-	expr : expr . EQ expr  (9)
-	expr : expr . LT expr  (10)
-	expr : expr . PLUS expr  (11)
-	expr : expr . MINUS expr  (12)
-	expr : expr . TIMES expr  (13)
-	expr : expr . DIV expr  (14)
-	expr : expr . apply_expr  (17)
-	expr : expr . CONS expr  (19)
-	and_expr : AND var var EQ expr . and_expr  (24)
-	cons_expr : expr . CONS cons_expr  (27)
-	and_expr : .  (25)
+	and_expr : AND var var . var_expr and_expr  (25)
+
+	ID  shift 21
+	EQ  shift 43
+	.  error
+
+	var  goto 44
+	var_expr  goto 118
+
+
+state 116
+	expr : LET REC var var EQ expr and_expr IN expr .  (8)
+	expr : expr . EQ expr  (10)
+	expr : expr . LT expr  (11)
+	expr : expr . PLUS expr  (12)
+	expr : expr . MINUS expr  (13)
+	expr : expr . TIMES expr  (14)
+	expr : expr . DIV expr  (15)
+	expr : expr . apply_expr  (18)
+	expr : expr . CONS expr  (20)
+	cons_expr : expr . CONS cons_expr  (28)
 
 	INT  shift 4
 	BOOL  shift 5
@@ -2024,29 +2034,54 @@ state 115
 	LPAR  shift 35
 	CONS  shift 37
 	LBRACKET  shift 12
-	AND  shift 94
-	IN  reduce 25
+	IN  reduce 8
+	THEN  reduce 8
+	ELSE  reduce 8
+	RPAR  reduce 8
+	WITH  reduce 8
+	OR  reduce 8
+	END  reduce 8
+	SEMI  reduce 8
+	EOF  reduce 8
+	COMMA  reduce 8
+	AND  reduce 8
 
-	and_expr  goto 116
 	apply_expr  goto 38
 
 
-state 116
-	and_expr : AND var var EQ expr and_expr .  (24)
+state 117
+	pattern_list : pattern COMMA pattern_list .  (43)
 
-	.  reduce 24
+	.  reduce 43
+
+
+state 118
+	and_expr : AND var var var_expr . and_expr  (25)
+	and_expr : .  (26)
+
+	AND  shift 102
+	IN  reduce 26
+	SEMI  reduce 26
+
+	and_expr  goto 119
+
+
+state 119
+	and_expr : AND var var var_expr and_expr .  (25)
+
+	.  reduce 25
 
 
 Rules never reduced:
-	cons_expr : expr CONS cons_expr  (27)
-	noncons_expr : apply_expr  (28)
+	cons_expr : expr CONS cons_expr  (28)
+	noncons_expr : apply_expr  (29)
 
 
 State 15 contains 23 reduce/reduce conflicts.
 State 60 contains 23 reduce/reduce conflicts.
-State 81 contains 1 shift/reduce conflict.
-State 92 contains 1 shift/reduce conflict.
+State 93 contains 1 shift/reduce conflict.
+State 94 contains 1 reduce/reduce conflict.
 
 
 34 terminals, 15 nonterminals
-50 grammar rules, 117 states
+52 grammar rules, 120 states

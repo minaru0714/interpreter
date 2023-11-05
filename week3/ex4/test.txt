@@ -6,13 +6,11 @@ type:Int -> Bool -> Int = <fun>
 fun x -> fun y -> y x;;
 type:: t1 -> (t1 -> t2) -> t2 = <fun>
 
-fun x -> fun y -> fun z -> x z (y z);;
+
    => type: : (t1 -> t2 -> t3) -> (t1 -> t2) -> t1 -> t3
 
 let rec fix f = fun x -> f (fix f) x;;
 let fact = fix (fun f -> fun x -> if x < 1 then 1 else x * f (x - 1));; in fact 5
-
-
     => fact : Int -> Int = <fun>
 
 let rec loop x = loop x;;
@@ -21,6 +19,8 @@ let rec loop x = loop x;;
 let rec f x = x + 1
     and g x = if x then f 1 else f 2
 in g true;;
+
+
 
 let rec fix f = fun x -> f (fix f) x;; 
 let fact = fix (fun f -> fun x -> if x < 1 then 1 else x * f (x - 1));;
@@ -40,6 +40,8 @@ f;;
 let f = fun x -> 1;;
 
     => f : t1 -> Int = <fun>
+
+
 let rec f x = if x < 1 then 1 else x * f (x - 1) ;;
 
 
@@ -56,9 +58,5 @@ fun f -> (f 0 < 1) && f true;;
 
     => エラー
 
-
-
-
-
-
-let rec f x = if x < 1 then 1 else x * f (x - 1) ;;
+let rec fix f = fun x -> f (fix f) x in
+let fact = fix (fun f -> fun x -> if x < 1 then 1 else x * f (x - 1));;
