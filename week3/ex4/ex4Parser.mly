@@ -55,7 +55,7 @@ command:
 expr:
   | LET var var_expr IN expr      { ELet($2,$3,$5) }
   | LET REC var var var_expr IN expr  { ERecFun ($3, $4, $5, $7) }
-  | LET REC var var EQ expr and_expr IN expr { ERecFunand ((($3,$4,$6) :: $7), $9) }
+  | LET REC var var var_expr and_expr IN expr { ERecFunand ((($3,$4,$5) :: $6), $8) }
   | IF expr THEN expr ELSE expr  { EIf($2,$4,$6) }
   | expr EQ expr { EEqual($1, $3) }
   | expr LT expr { ECompare($1, $3) }

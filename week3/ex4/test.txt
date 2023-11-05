@@ -26,6 +26,8 @@ let rec fix f = fun x -> f (fix f) x;;
 let fact = fix (fun f -> fun x -> if x < 1 then 1 else x * f (x - 1));;
 
     => - : Int = 2
+
+    
 let f = fun x -> 1;;
 
     => f : t1 -> Int = <fun>

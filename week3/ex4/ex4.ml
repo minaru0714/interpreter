@@ -45,7 +45,8 @@ let interactive_loop () =
         let value = eval eval_env exp in
         print_value value;
         print_newline ();
-        loop (new_ty_env, (var, value) :: eval_env)
+        loop ((var, inferred_type)::new_ty_env, (var, value) :: eval_env)
+
   
      | CRecFun (f, x, exp) as cmd -> 
       let (inferred_type, new_ty_env) = infer_cmd ty_env cmd in
@@ -65,13 +66,6 @@ let interactive_loop () =
       match tuple_type with
       | TTuple types when List.length types = List.length fs ->
       let new_type_env = List.fold_left2 (fun env (f,_,_) t -> (f, t) :: env ) new_ty_env fs types in
-       (*let rec extend_env idx fs env = match fs with
-        | [] -> env
-        | (f, x, e') :: tail ->
-          let env' = (f, VRecFunand (idx, fs, env)) :: env in
-          extend_env (idx + 1) tail env'
-          in
-        let extended_env = extend_env 1 fs eval_env in*)
         let function_mappings = List.mapi (fun i (f, x, e) -> 
           (f, VRecFunand (i+1, fs, eval_env))) fs 
         in
