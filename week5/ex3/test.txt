@@ -1,6 +1,25 @@
 let rec loop x = loop x;;
     => loop : t1 -> t2
 
+
+let z = loop ();;
+
+    => z : t2
+loop ();;
+
+    => 止まらない
+    let rec loop x = loop x;;
+(fun x -> 42) (loop ())
+
+    => - : Int = 42;;
+(fun x -> fun y -> x) 5 (loop ());;
+
+    => - : Int = 5
+    let rec loop x = loop x;;
+(fun x -> fun y -> x) (loop ()) 5;;
+
+    => 止まらない
+
 課題3
 let rec loop = loop;;
     => loop : t1
