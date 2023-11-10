@@ -39,7 +39,8 @@ in loop();
         print_string (var ^ " : ");
         print_type inferred_type;
         print_newline ();
-        loop ((var, inferred_type)::new_ty_env, (var, Thunk(exp, eval_env)) :: eval_env)
+        loop ((var, inferred_type)::new_ty_env, (var, NormalThunk (Thunk(exp, eval_env))) :: eval_env)
+
 
       | CRecFun (f, x, exp) as cmd -> 
         let (inferred_type, new_ty_env) = infer_cmd ty_env cmd in
@@ -49,9 +50,10 @@ in loop();
                 print_type t;
                 print_newline ();
             ) env in
-          print_ty_env inferred_type;
-          print_newline ();
-          loop (new_ty_env, (f, Thunk(EValue (VRecFun(f, x, exp, eval_env)), eval_env)) :: eval_env)
+        print_ty_env inferred_type;
+        print_newline ();
+        loop (new_ty_env, (f, NormalThunk (Thunk(EValue (VRecFun(f, x, exp, eval_env)), eval_env))) :: eval_env)  
+    
 
       | CRecFunand fs -> 
           let tuple_expr = ERecFunand(fs, ETuple(List.map(fun(f,_,_) -> EVar f)fs)) in   
@@ -60,11 +62,13 @@ in loop();
           | TTuple types when List.length types = List.length fs ->
           let new_type_env = List.fold_left2 (fun env (f,_,_) t -> (f, t) :: env ) new_ty_env fs types in
             let function_mappings = List.mapi (fun i (f, x, e) -> 
-            (f, Thunk(EValue(VRecFunand (i+1, fs, eval_env)), eval_env))) fs in
+            (f, NormalThunk (Thunk(EValue(VRecFunand (i+1, fs, eval_env)), eval_env)))) fs in
               let eval_new_env = (function_mappings @ eval_env) in
              loop(new_type_env, eval_new_env)
           | _ -> failwith "Error"
           )
+
+
       | CLetRec fs ->
           let tuple_expr = 
           let defs, vars = List.split (List.map (fun (var, exp) -> (var, exp), EVar var) fs) in
@@ -75,7 +79,7 @@ in loop();
           match tuple_type with
            | TTuple types when List.length types = List.length fs ->
             let new_type_env = List.fold_left2 (fun env (var, _) t -> (var, t) :: env ) ty_env fs types in
-            let new_eval_env = List.map (fun (var, exp) -> (var, Thunk(exp, eval_env))) fs in
+            let new_eval_env = List.map (fun (var, exp) -> (var, NormalThunk (Thunk(exp, eval_env)))) fs in
              loop (new_type_env, new_eval_env @ eval_env)
            | _ -> failwith "Error in type inference for CLetRec"
         

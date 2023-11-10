@@ -28,7 +28,11 @@ type expr = EValue of value
           | ERecFunand of (name * name * expr) list * expr
           | ELetRec of (name * expr) list * expr
 
-and env = (name * thunk) list
+and env = (name * env_thunk) list
+and env_thunk = 
+            | NormalThunk of thunk
+            | RecThunk of (name * expr) list * env
+          
 and value = VInt of int
           | VBool of bool
           | VUnit
@@ -64,7 +68,7 @@ exception Eval_error
 
 let rec find_match : pattern -> thunk -> env option = fun p t ->
   match p with
-  | PVar x -> Some [(x, t)]
+  | PVar x -> Some [(x, NormalThunk t)]
   | PUnit -> (match force t with LVUnit -> Some [] | _ -> None) 
   | _ -> let v = match t with
    |Thunk(e, env) -> eval env e in
@@ -164,16 +168,24 @@ and eval : env -> expr -> lazy_value = fun env expr ->
     | LVBool false -> eval env e2
     | _ -> raise Eval_error  
   )
-| EVar x -> 
-    let thk = List.assoc x env in
-    force thk
+  | EVar x -> 
+  (match List.assoc x env with
+  | NormalThunk thk -> force thk
+  | RecThunk (bindings, oenv) ->
+      let extended_env = List.fold_left (fun acc_env (name, expr) ->
+          (name, NormalThunk (Thunk (expr, oenv))) :: acc_env
+      ) env bindings in
+      match List.assoc x extended_env with
+      | NormalThunk thk -> force thk
+      | _ -> raise Eval_error)  
+
 
 | EUnit -> LVUnit
 
 | ELet (x, e1, e2) ->
     let lv1 = eval env e1 in
     let v1 = force_to_value lv1 in
-    eval ((x, Thunk (EValue v1, [])) :: env) e2
+    eval ((x, NormalThunk (Thunk (EValue v1, []))) :: env) e2
 
 | EFun (x, e) ->
     LVFun (x, e, env)
@@ -182,20 +194,24 @@ and eval : env -> expr -> lazy_value = fun env expr ->
     (match eval env e1 with
     | LVFun (x, e, oenv) -> 
         let thk = Thunk (e2, env) in  
-        eval ((x, thk) :: oenv) e
+        eval ((x, NormalThunk thk) :: oenv) e  
     | LVRecFun(f, x, e, oenv) ->
-        let env' = (x, Thunk (e2, env)) :: (f, Thunk (EValue (VRecFun (f, x, e, oenv)), oenv)) :: oenv in 
+        let env' = (x, NormalThunk (Thunk (e2, env))) ::  
+                   (f, NormalThunk (Thunk (EValue (VRecFun (f, x, e, oenv)), oenv))) :: oenv in 
         eval env' e
     | LVRecFunand (idx, fns, oenv) ->
         let (f, x, e) = List.nth fns (idx - 1) in
-        let env' = (x, Thunk (e2, env)) :: (List.mapi (fun i (f, x, e) -> 
-            (f, Thunk (EValue (VRecFunand (i+1, fns, oenv)), oenv))) fns) @ oenv in
+        let env' = (x, NormalThunk (Thunk (e2, env))) ::  
+                   (List.mapi (fun i (f, x, e) -> 
+                       (f, NormalThunk (Thunk (EValue (VRecFunand (i+1, fns, oenv)), oenv)))) fns) @ oenv in
         eval env' e
     | _ -> raise Eval_error)
 
+
  | ERecFun (f, x, e1, e2) ->
-    let env' = (f, Thunk (EValue (VRecFun(f, x, e1, env)), env)) :: env in
+    let env' = (f, NormalThunk (Thunk (EValue (VRecFun(f, x, e1, env)), env))) :: env in  
     eval env' e2
+
 
  | EMatch (e, cases) -> 
     (let t = Thunk(e, env) in
@@ -214,31 +230,23 @@ and eval : env -> expr -> lazy_value = fun env expr ->
   | ETuple es -> LVTuple (List.map (fun e -> Thunk (e, env)) es)
 
   | ERecFunand (functions, e) ->
-   (let rec extend_env idx fs env = 
-   match fs with
-      | [] -> env
-      | (f, x, e') :: tail ->
-        let env' = (f, Thunk (EValue (VRecFunand (idx, functions, env)), env)) :: env in
-        extend_env (idx + 1) tail env'
-    in
-    let env' = extend_env 1 functions env in
-    eval env' e)
-  
-  | ELetRec (bindings, e)  ->
-  let rec extend_env env = function
-    | [] -> env
-    | (f, e1) :: rest ->
-      let env' = (f, Thunk(e1, env)) :: env in
-      extend_env env' rest
-  in
-  let env' = extend_env env bindings in
-  eval env' e
+  (let rec extend_env idx fs env = 
+  match fs with
+     | [] -> env
+     | (f, x, e') :: tail ->
+       let env' = (f, NormalThunk (Thunk (EValue (VRecFunand (idx, functions, env)), env))) :: env in  
+       extend_env (idx + 1) tail env'
+   in
+   let env' = extend_env 1 functions env in
+   eval env' e)
 
-  (*
-  | ELetRec ([(f, e1)], e2)  ->
-    let rec env' = (f, Thunk(e1, env')) :: env in
-    eval env' e2
-    *)
+  
+    | ELetRec (bindings, e) ->
+    let env' = List.fold_left (fun acc_env (name, expr) ->
+        (name, RecThunk (bindings, acc_env)) :: acc_env
+    ) env bindings in
+    eval env' e
+
 
 let rec print_value (v: value) : unit = 
   match v with
