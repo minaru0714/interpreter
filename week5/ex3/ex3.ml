@@ -65,13 +65,20 @@ in loop();
              loop(new_type_env, eval_new_env)
           | _ -> failwith "Error"
           )
-          | CLetRec fs ->
-          let inferred_types_with_envs = List.map (fun (var, exp) -> (var, infer_expr ty_env exp)) fs in
-          let new_ty_env = List.fold_left (fun env (var, (ty, _)) -> (var, ty) :: env) ty_env inferred_types_with_envs in
-          let new_eval_env = List.map (fun (var, exp) -> (var, Thunk(exp, eval_env))) fs in
-          loop (new_ty_env, new_eval_env @ eval_env)
+      | CLetRec fs ->
+          let tuple_expr = 
+          let defs, vars = List.split (List.map (fun (var, exp) -> (var, exp), EVar var) fs) in
+          let defs_exprs = List.map (fun (var, exp) -> (var, exp)) defs in
+          ELetRec (defs_exprs, ETuple vars)
+          in
+          let (tuple_type, new_ty_env) = infer_expr ty_env tuple_expr in
+          match tuple_type with
+           | TTuple types when List.length types = List.length fs ->
+            let new_type_env = List.fold_left2 (fun env (var, _) t -> (var, t) :: env ) ty_env fs types in
+            let new_eval_env = List.map (fun (var, exp) -> (var, Thunk(exp, eval_env))) fs in
+             loop (new_type_env, new_eval_env @ eval_env)
+           | _ -> failwith "Error in type inference for CLetRec"
         
-
 
   
     with

@@ -29,6 +29,7 @@ type token =
   | LBRACKET
   | RBRACKET
   | AND
+  | UNIT
 
 val main :
   (Lexing.lexbuf  -> token) -> Lexing.lexbuf -> LazySyntax.expr

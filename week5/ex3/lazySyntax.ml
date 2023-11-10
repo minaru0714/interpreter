@@ -5,6 +5,7 @@ type binOp = OpAdd | OpSub | OpMul | OpDiv
 
 type pattern = PInt of int
              | PBool of bool
+             | PUnit
              | PVar of name
              | PNil
              | PCons of pattern * pattern
@@ -16,6 +17,7 @@ type expr = EValue of value
           | ECompare of expr * expr
           | EIf of expr * expr * expr
           | EVar of name
+          | EUnit
           | ELet of name * expr * expr
           | EFun of name * expr
           | EApp of expr * expr
@@ -29,6 +31,7 @@ type expr = EValue of value
 and env = (name * thunk) list
 and value = VInt of int
           | VBool of bool
+          | VUnit
           | VFun of name * expr * env
           | VRecFun of name * name * expr * env
           | VNil
@@ -40,6 +43,7 @@ and value = VInt of int
 and thunk = Thunk of expr * env
 and lazy_value =  LVInt of int
                 | LVBool of bool
+                | LVUnit
                 | LVFun of name * expr * env
                 | LVRecFun of name * name * expr * env
                 | LVNil
@@ -61,6 +65,7 @@ exception Eval_error
 let rec find_match : pattern -> thunk -> env option = fun p t ->
   match p with
   | PVar x -> Some [(x, t)]
+  | PUnit -> (match force t with LVUnit -> Some [] | _ -> None) 
   | _ -> let v = match t with
    |Thunk(e, env) -> eval env e in
    match p,v with 
@@ -87,6 +92,7 @@ let rec find_match : pattern -> thunk -> env option = fun p t ->
 and force_to_value : lazy_value -> value = function
   | LVInt i -> VInt i
   | LVBool b -> VBool b
+  | LVUnit -> VUnit
   | LVFun (x, e, env) -> VFun (x, e, env)
   | LVRecFun (f, x, e, env) -> VRecFun (f, x, e, env)
   | LVNil -> VNil
@@ -102,6 +108,7 @@ and eval : env -> expr -> lazy_value = fun env expr ->
   | EValue v -> (match v with
                  | VInt i -> LVInt i
                  | VBool b -> LVBool b
+                 | VUnit -> LVUnit
                  | VFun (x, e, env) -> LVFun (x, e, env)
                  | VRecFun (f, x, e, env) -> LVRecFun (f, x, e, env)
                  | VNil -> LVNil
@@ -161,6 +168,8 @@ and eval : env -> expr -> lazy_value = fun env expr ->
     let thk = List.assoc x env in
     force thk
 
+| EUnit -> LVUnit
+
 | ELet (x, e1, e2) ->
     let lv1 = eval env e1 in
     let v1 = force_to_value lv1 in
@@ -189,7 +198,7 @@ and eval : env -> expr -> lazy_value = fun env expr ->
     eval env' e2
 
  | EMatch (e, cases) -> 
-    let t = Thunk(e, env) in
+    (let t = Thunk(e, env) in
     let rec try_cases : (pattern * expr) list -> lazy_value
     =  function
       | [] -> raise Eval_error 
@@ -197,7 +206,7 @@ and eval : env -> expr -> lazy_value = fun env expr ->
           (match find_match p t with
             | Some nenv -> eval (nenv @ env) e'
             | None -> try_cases rest) in
-    try_cases  cases
+    try_cases  cases)
 
   
   | ECons (e1, e2) -> LVCons (Thunk (e1, env), Thunk (e2, env))
@@ -205,25 +214,38 @@ and eval : env -> expr -> lazy_value = fun env expr ->
   | ETuple es -> LVTuple (List.map (fun e -> Thunk (e, env)) es)
 
   | ERecFunand (functions, e) ->
-    let rec extend_env idx fs env = match fs with
+   (let rec extend_env idx fs env = 
+   match fs with
       | [] -> env
       | (f, x, e') :: tail ->
         let env' = (f, Thunk (EValue (VRecFunand (idx, functions, env)), env)) :: env in
         extend_env (idx + 1) tail env'
     in
     let env' = extend_env 1 functions env in
-    eval env' e
+    eval env' e)
   
+  | ELetRec (bindings, e)  ->
+  let rec extend_env env = function
+    | [] -> env
+    | (f, e1) :: rest ->
+      let env' = (f, Thunk(e1, env)) :: env in
+      extend_env env' rest
+  in
+  let env' = extend_env env bindings in
+  eval env' e
+
+  (*
   | ELetRec ([(f, e1)], e2)  ->
     let rec env' = (f, Thunk(e1, env')) :: env in
     eval env' e2
-    
+    *)
 
 let rec print_value (v: value) : unit = 
   match v with
   | VBool true -> print_string "true"
   | VBool false -> print_string "false"
   | VInt i -> print_int i
+  | VUnit -> print_string "()"
   | VFun _ -> print_string "<fun>"
   | VRecFun _ -> print_string "<fun>"
   | VNil -> print_string "[]"

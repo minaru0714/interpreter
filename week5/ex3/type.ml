@@ -3,7 +3,8 @@ open  LazySyntax
 type tyvar = string 
 
 type ty = TInt                    
-         | TBool                   
+         | TBool   
+         | TUnit                
          | TFun of ty * ty       
          | TVar of tyvar  
          | TList of ty 
@@ -20,7 +21,7 @@ exception Unification_failure of string
 
 let rec apply_ty_subst (subst: ty_subst) (t: ty): ty =
   let applied = match t with
-      | TInt | TBool  -> t
+      | TInt | TBool  | TUnit -> t
       | TFun (t1, t2) -> TFun (apply_ty_subst subst t1, apply_ty_subst subst t2)
       | TVar v -> (try List.assoc v subst with Not_found -> t)
       | TList t -> TList (apply_ty_subst subst t)
@@ -77,6 +78,7 @@ let new_ty_var () =
     match p with
     | PInt _ -> (TInt, [], [])
     | PBool _ -> (TBool, [], [])
+    | PUnit  -> (TUnit, [], [])
     | PVar x -> 
         let t = TVar (new_ty_var ()) in
         (t, [(x, t)], [])
@@ -99,6 +101,7 @@ let rec gather_ty_constraints ty_env = function
         (match v with 
         | VInt _ -> (TInt, [])
         | VBool _ -> (TBool, [])
+        | VUnit -> (TUnit , [])
         | _ -> raise ((Unification_failure "not value"))
         )
     | EBin (op, e1, e2) ->
@@ -118,6 +121,8 @@ let rec gather_ty_constraints ty_env = function
         (t2, (t1, TBool) :: (t2, t3) :: c1 @ c2 @ c3)
     | EVar x -> 
         (List.assoc x ty_env, [])
+    | EUnit -> (TUnit, [])
+    
     | ELet (x, e1, e2) ->
         let t1, c1 = gather_ty_constraints ty_env e1 in
         let t2, c2 = gather_ty_constraints ((x, t1) :: ty_env) e2 in
@@ -173,11 +178,32 @@ let rec gather_ty_constraints ty_env = function
           let all_constraints = matched_constraints @ (List.flatten branch_constraints_list) in
           let expected_ty = TVar (new_ty_var ()) in
           (expected_ty, List.map (fun ty -> (ty, expected_ty)) branch_tys @ all_constraints)
+
+      | ELetRec (bindings, e2) ->
+      match bindings with
+      | [] -> failwith "LetRec with empty bindings is not supported"
+      | _ ->
+          let initial_env, initial_constraints = 
+            List.split (List.map (fun (f, _) -> 
+              let t_var_f = TVar (new_ty_var ()) in
+              ((f, t_var_f), (t_var_f, []))
+            ) bindings) in
+          let extended_env = initial_env @ ty_env in
+          let bodies_constraints = List.map2 (fun (_, e1) (t_var_f, _) -> 
+              let (t1, c1) = gather_ty_constraints extended_env e1 in
+              (t_var_f, t1) :: c1
+          ) bindings initial_constraints in
+          let all_constraints = List.flatten bodies_constraints in
+          let (t2, c2) = gather_ty_constraints extended_env e2 in
+          (t2, all_constraints @ c2)
+
+    (*
       | ELetRec ([(f, e1)], e2)  ->
           let t_var_f = TVar (new_ty_var ()) in
           let t1, c1 = gather_ty_constraints ((f, t_var_f) :: ty_env) e1 in
           let t2, c2 = gather_ty_constraints ((f, t1) :: ty_env) e2 in
           (t2, (t_var_f, t1) :: c1 @ c2)
+          *)
     
   
 
@@ -230,6 +256,7 @@ let rec print_type (t: ty): unit =
     match t with
     | TInt -> print_string "Int"
     | TBool -> print_string "Bool"
+    | TUnit -> print_string "Unit"
     | TFun (t1, t2) ->
         print_type t1;
         print_string " -> ";

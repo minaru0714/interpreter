@@ -19,6 +19,7 @@
 %token CONS 
 %token LBRACKET  RBRACKET 
 %token AND
+%token UNIT
 
 %nonassoc SEMI
 %nonassoc LET IN REC FUN ARROW MATCH WITH OR END AND
@@ -28,9 +29,7 @@
 %right CONS
 %left PLUS MINUS 
 %left TIMES DIV
-%nonassoc INT BOOL ID LPAR RPAR LBRACKET  RBRACKET 
-
-
+%nonassoc INT BOOL ID UNIT LPAR RPAR LBRACKET  RBRACKET 
 
 %start main
 %type <LazySyntax.expr> main
@@ -38,8 +37,6 @@
 %start command
 %type <LazySyntax.command> command
 %%
-
-
 
 main:
  |expr EOF { $1 }
@@ -66,12 +63,10 @@ expr:
   | expr TIMES expr { EBin(OpMul, $1, $3) }
   | expr  DIV expr   { EBin(OpDiv, $1, $3) }
   | FUN var ARROW expr { EFun($2,$4) }
-  | FUN var var ARROW expr { EFun($2, EFun($3, $5)) }
   | expr apply_expr    {EApp ($1,$2)}
   | MATCH expr WITH pattern_expr END { EMatch ($2, $4) }
   | expr CONS expr { ECons ($1, $3) }
-  | cons_expr  { $1 }
-  | apply_expr { $1 }
+  | apply_expr  { $1 }
 ;
 
 var_expr:
@@ -89,52 +84,46 @@ and2_expr:
   |                           { [] }  
 ;
 
-cons_expr:
-  | noncons_expr                     { $1 }
-  | expr CONS cons_expr              { ECons ($1, $3) }
-  ;
-
-noncons_expr:
-  | apply_expr                       { $1 }
-  | LPAR expr COMMA expr_list RPAR   { ETuple ($2 :: $4) }
-  ;
-  
-expr_list:
-  | expr { [$1] }
-  | expr COMMA expr_list { $1 :: $3 }
-;
-
-
-pattern_expr : 
-  | { [] }
-  | pattern ARROW expr  { [($1, $3)] }
-  | pattern ARROW expr OR pattern_expr { ($1, $3) :: $5 }
-;
-
-pattern:
-  | INT     { PInt $1 }
-  | BOOL    { PBool $1 }
-  | ID      { PVar $1 }
-  | LBRACKET RBRACKET { PNil }
-  | LPAR pattern COMMA pattern_list RPAR { PTuple ($2 :: $4) }
-  | pattern CONS pattern { PCons ($1, $3) }
-;
-
-pattern_list:
-  | pattern { [$1] }
-  | pattern COMMA pattern_list { $1 :: $3 }
-;
-
 apply_expr:
   | INT             { EValue (VInt $1) }
   | BOOL            { EValue (VBool $1) }
   | ID              { EVar $1 }
   | LPAR expr RPAR  { $2 }
   | LBRACKET  RBRACKET { EValue VNil }
-;
+  | LPAR expr COMMA expr_list RPAR   { ETuple ($2 :: $4) }
+  | expr CONS expr              { ECons ($1, $3) }
+  | expr apply_expr             { EApp ($1, $2) }
+  | LPAR RPAR                   { EValue VUnit } 
+  | UNIT                        { EValue VUnit }
+  ;
 
+expr_list:
+  | expr { [$1] }
+  | expr COMMA expr_list { $1 :: $3 }
+  ;
 
+pattern_expr: 
+  | { [] }
+  | pattern ARROW expr  { [($1, $3)] }
+  | pattern ARROW expr OR pattern_expr { ($1, $3) :: $5 }
+  ;
+
+pattern:
+  | INT     { PInt $1 }
+  | BOOL    { PBool $1 }
+  | ID      { PVar $1 }
+  | LBRACKET RBRACKET { PNil }
+  | LPAR  RPAR  { PUnit }
+  | LPAR pattern COMMA pattern_list RPAR { PTuple ($2 :: $4) }
+  | pattern CONS pattern { PCons ($1, $3) }
+  ;
+
+pattern_list:
+  | pattern { [$1] }
+  | pattern COMMA pattern_list { $1 :: $3 }
+  ;
 
 var:
   | ID { $1 }
-;
+  ;
+

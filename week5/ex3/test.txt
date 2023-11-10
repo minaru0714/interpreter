@@ -1,6 +1,14 @@
 let rec loop x = loop x;;
+
     => loop : t1 -> t2
 
+let head = fun x ->
+  match x with
+    h :: t -> h
+  | [] -> 0
+  end;;
+in
+head (5 :: loop ());;
 
 let z = loop ();;
 
@@ -9,7 +17,7 @@ loop ();;
 
     => 止まらない
     let rec loop x = loop x;;
-(fun x -> 42) (loop ())
+(fun x -> 42) (loop ());;
 
     => - : Int = 42;;
 (fun x -> fun y -> x) 5 (loop ());;
@@ -20,7 +28,6 @@ loop ();;
 
     => 止まらない
 
-課題3
 let rec loop = loop;;
     => loop : t1
 
@@ -46,3 +53,25 @@ in
 let rec mylist = 0 :: 1 :: mylist in
 take 5 mylist;;
     => - : [Int] = [0,1,0,1,0]
+
+
+    let rec loop x = loop x;;
+
+
+let z = loop ();;
+
+
+(fun x -> 42) (loop ())
+
+
+(fun x -> fun y -> x) 5 (loop ());;
+
+
+
+  (*| CLetRec fs ->
+          let inferred_types_with_envs = List.map (fun (var, exp) -> (var, infer_expr ty_env exp)) fs in
+          let new_ty_env = List.fold_left (fun env (var, (ty, _)) -> (var, ty) :: env) ty_env inferred_types_with_envs in
+          let new_eval_env = List.map (fun (var, exp) -> (var, Thunk(exp, eval_env))) fs in
+          loop (new_ty_env, new_eval_env @ eval_env)
+        
+v**)
